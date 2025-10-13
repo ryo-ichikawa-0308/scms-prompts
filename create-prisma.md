@@ -95,7 +95,7 @@ Prismaスキーマメインファイル及びモデルファイルは、apiサ�
 * **目的**: `tables.md`ファイルの構造と内容が、期待される形式に準拠しているかを確認する。
 
 * **処理内容**:
-  * `tables.md`内のすべての`##`セクションを正規表現で抽出し、各セクション配下のMarkdownテーブルを`get_markdown_table_to_df`関数でDataFrameに変換する。
+  * `tables.md`内のすべての`##`セクションを抽出し、各セクション配下のMarkdownテーブルを`get_markdown_table_to_df`関数でDataFrameに変換する。
   * 各セクションから抽出されたDataFrameが、`config.json`の`tables_overview_columns`で定義された期待されるカラム（`テーブル論理名`, `テーブル物理名`, `概要`, `テーブル作成順序`, `備考`）をすべて含んでいるかを確認する。不足しているカラムがあればNaNで追加し、カラムの順序を期待されるものに再配置する。
   * 抽出された全テーブルのDataFrameを結合し、最終的なテーブル一覧DataFrameを作成する。
   * `テーブル物理名`カラム内のMarkdownリンク（例: `[users](./users.md)`）から、物理名（`users`）と相対ファイルパス（`./users.md`）を抽出する。
@@ -110,47 +110,30 @@ Prismaスキーマメインファイル及びモデルファイルは、apiサ�
   * `tables.md`で読み込んだ概要情報と、個別ファイル内の`1.テーブル概要`の内容（論理名、物理名、概要）が一致するかを検証し、整合性を保つ。
   * 各セクション（`1.テーブル概要`, `2.カラム定義`, `3.インデックス定義`, `4.外部キー定義`）を`get_markdown_table_to_df`関数でDataFrameに変換する。
   * 各セクションのDataFrameが、`config.json`で定義されたそれぞれの期待されるカラムをすべて含んでいるかを確認する。不足しているカラムがあればNaNで追加し、カラムの順序を期待されるものに再配置する。
+  * バリデーションは、個別の指示がない限りはエラーとして検出する。
 
   * **`2.カラム定義`のバリデーション**:
     * `カラム論理名`が空でないことを確認する。
-    * `カラム論理名`が重複していないこと確認する。
+    * `カラム論理名`が同一テーブル内で重複していないこと確認する。
     * `カラム物理名`が空でないことを確認する。
-    * `カラム物理名`が重複していないことを確認する。
+    * `カラム物理名`が同一テーブル内で重複していないことを確認する。
     * `カラム物理名`がMySQLの予約語でないことを確認する。
+    * `config.json`の`type_rules`に基づいて、`型(桁,精度)`の値が正規表現に一致するかを検証する。
+    * 型が`CHAR`もしくは`VARCHAR`の場合、続く`()`から桁数を取得する。(例: VARCHAR(255) → type: VARCHAR, length: 255)
+    * 型が`DECIMAL`の場合、続く`()`から桁数と精度を取得する。(例: DECIMAL(10,2) → type: DECIMAL, length: 10, precision: 2)
+      * 精度＞桁数となっている場合はエラーとする。
     * `config.json`の`column_rules`に基づいて、`PK`, `FK`, `UNIQUE`, `NOTNULL`などの値が正規表現に一致するかを検証する。
-    * PK物理名（`id`または`_id`で終わる形式）の命名規則を検証する。
+    * 論理名「`ID`」の項目が物理名「`id`」であること、`PK`の設定がされていること、`NOTNULL`の設定が`NN`であることを確認する。
+    * `FK`が設定されている項目が、論理名「`参照先テーブル論理名ID`」物理名「`参照先テーブル物理名id`」であること、`NOTNULL`の設定が`NN`であることを確認する。違反した場合はワーニングとする(将来の拡張で例外的なFK名を許容した場合の考慮)。
     * `NOTNULL`が`NN`であるカラムの`DEFAULT`値が`NULL`でないことを確認する。
     * 必須監査カラム（`registered_at`, `registered_by`, `updated_at`, `updated_by`, `is_deleted`）の存在と、その型、NOTNULL、DEFAULT値が`config.json`の仕様と一致するかを検証する。
-    * PKが単一の場合、`id`カラムの論理名、物理名、型、FKが`-`であるかを確認する。
-    * PKが複合の場合、`id`カラムの存在と規則、またはすべてのPKがFKであるかを確認する。
-
-    * **ナチュラルキーのチェック**:
-
-      * 物理名が`_no`で終わるカラムをナチュラルキー候補として識別する。
-      * 各ナチュラルキー候補について、以下の条件を評価する。
-        * `is_fk_property`: 当該カラムが`FK`項目に`FK`と記載されているかを確認する。
-        * `is_part_of_pk`: 当該カラムが`PK`項目に`PK`と記載されているかを確認する。
-        * `is_self_natural_key`: 当該カラムの物理名が、現在のテーブルの物理名に`_no`を付加した形式（例: `users`テーブルの`users_no`）であるかを確認する。
-
-        * **UNIQUE設定が必須ではない条件**:
-          * `is_fk_property` が `True` (外部キーとしての性質を持つ)
-          * `is_self_natural_key` が `False` (`自テーブルの物理名_no`でない)
-          * `is_part_of_pk` が `False` (主キーの一部を構成していない)
-          * 上記の3つの条件をすべて満たす場合、そのナチュラルキー候補の`UNIQUE`設定は必須ではありません。
-
-      * **バリデーションロジック**:
-        * `UNIQUE`設定が必須ではない場合:
-          * `NOTNULL`であること（`NN`であること）を必須とする。
-        * `UNIQUE`設定が必須である場合:
-          * `UNIQUE`項目が`UKx`（複合ユニークキーを含む）または`PK`であること、かつ`NOTNULL`であること（`NN`であること）を必須とする。
-          * 論理名が`{テーブル論理名}番号`であること（`is_self_natural_key`の場合、または`is_fk_property`が`False`で`UNIQUE`である場合）を検証する。
 
   * **`3.インデックス定義`のバリデーション**:
     * `インデックス物理名`が空でないことを確認する。
     * `インデックス物理名`が全テーブル間で重複していないことを確認する。
     * `config.json`の`index_rules`に基づいて、物理名の形式、`UNIQUE`、`インデックスタイプ`、`ソート順`、`備考`が正規表現に一致するかを検証する。
     * `カラム物理名`で指定されたカラムが、`2.カラム定義`に実際に存在するかを確認する。
-    * インデックスが既存のPKまたはUNIQUE制約と重複していないことを確認する。
+    * `2.カラム定義`で`UKn`の設定をした項目と、`FK`の設定をした項目にインデックス定義が付与されていることを確認する。
     * `B-tree`インデックスはソート順が必要であり、`Hash`インデックスはソート順が不要であることを確認する。
 
   * **`4.外部キー定義`のバリデーション**:
@@ -166,12 +149,23 @@ Prismaスキーマメインファイル及びモデルファイルは、apiサ�
 
 * **処理内容**:
   * `config.json`の`type_mappings`を使用して、MySQLのデータ型をPrismaのデータ型にマッピングする。
+  * モデル名はテーブル物理名をCamelCase形式に変換したものとし、`@@map`でテーブル物理名と紐づける。
   * モデル名に対して、テーブル論理名をPrismaコメントで付与する。
+  * カラム名は、カラム物理名をcamelCaseに変換したものとし、`@map`でカラム物理名と紐づける。
   * 各カラムに対して、`@id`, `@unique`, `?` (Null許容), `@default`, `@updatedAt`,`@db.VarChar(X)`(文字列型の場合の桁数定義)などのPrismaアノテーションを適用する。また、カラム論理名をPrismaコメントで付与する。
-  * 複合主キー（`@@id([])`）および複合ユニーク制約（`@@unique([])`）を定義する。
+  * `PK`が設定されている項目が複数ある場合、複合主キー（`@@id([])`）を定義する。
+  * 複数の項目に対して同じ`UKn`が設定されている場合、その項目群に対して複合ユニーク制約（`@@unique([])`）を定義する。
+  * インデックス(`@@index([])`)を定義する。但し、`@unique`あるいは`@@unique([])`と同じ項目並びのインデックスは定義しない。
   * 外部キー定義に基づいて、`@relation`アノテーションを持つリレーションフィールドを生成する。
-  * リレーションフィールド名は外部キーの物理名から「`fk_`」を除去し、camelCase形式に変換した文字列とする。リレーションフィールド名が重複した場合はエラーとする。
-  * リレーションの逆方向（例: `User`モデルに`Reservation[]`）を自動的に追加する。
+    * `name`属性は、外部キーの物理名を設定する。
+    * `fields`属性は、外部キー項目のフィールド名を設定する。
+    * `references`属性は、外部キー参照先項目の物理名を設定する。
+    * `onDelete`属性は、`ON DELETE`から取得した内容を設定する。
+    * `onUpdate`属性は、`ON UPDATE`から取得した内容を設定する。
+  * リレーションフィールド名は外部キーの物理名から「`fk_`」を除去し、camelCase形式に変換した文字列とする。リレーションフィールド名が重複した場合はエラーとする。(例: `fk_reservations_to_users` → `reservationsToUsers`)
+  * 逆リレーションフィールド（例: `User`モデルに`Reservation[]`）を自動的に追加する。
+    * `name`属性は、対応するリレーションフィールドの外部キーの物理名を設定する。
+  * 逆リレーションフィールドのフィールド名は、対応するリレーションフィールドのフィールド名をCamelCaseに変換し、接頭辞`rev`を付加する。(例: `fk_reservations_to_users` → `revReservationsToUsers`)
 
 ## 5. エラーハンドリングとログ出力
 
@@ -192,7 +186,8 @@ Prismaスキーマメインファイル及びモデルファイルは、apiサ�
     "VARCHAR": "String",
     "INT": "Int",
     "TIMESTAMP": "DateTime",
-    "TINYINT": "Boolean"
+    "TINYINT": "Boolean",
+    "DECIMAL": "Decimal"
   },
   "validation_rules": {
     "tables_overview_columns": {
@@ -202,11 +197,11 @@ Prismaスキーマメインファイル及びモデルファイルは、apiサ�
       "TABLE_SORT": "テーブル作成順序",
       "REMARK": "備考"
     },
-    "table_overview_sections":{
-      "OVERVIEW":"1.テーブル概要",
-      "COLUMN_DEFINITION":"2.カラム定義",
-      "INDEX_DEFINITION":"3.インデックス定義",
-      "FK_DEFINITION":"4.外部キー定義"
+    "table_overview_sections": {
+      "OVERVIEW": "1.テーブル概要",
+      "COLUMN_DEFINITION": "2.カラム定義",
+      "INDEX_DEFINITION": "3.インデックス定義",
+      "FK_DEFINITION": "4.外部キー定義"
     },
     "table_overview_section_columns": {
       "ITEM": "項目",
@@ -258,16 +253,56 @@ Prismaスキーマメインファイル及びモデルファイルは、apiサ�
     },
     "index_rules": {
       "INDEX_NAME": "^idx_",
-      "UNIQUE": "^(UK|-)$",
+      "UNIQUE": "^(YES|NO)$",
       "TYPE": "^(B-tree|Hash)$",
       "SORT": "^(ASC|DESC|-)$",
       "REMARK": "^(?!-).+$"
     },
     "fk_rules": {
       "FK_NAME": "^fk_",
-      "ON_DELETE": "^(CASCADE|RESTRICT|SET NULL|NO ACTION)$",
-      "ON_UPDATE": "^(CASCADE|RESTRICT|SET NULL|NO ACTION)$"
-    }
+      "ON_DELETE": "^(Cascade|Restrict|NoAction|SetNull|SetDefault)$",
+      "ON_UPDATE": "^(Cascade|Restrict|NoAction|SetNull|SetDefault)$"
+    },
+    "type_rules":{
+      "CHAR": "^(CHAR\\(\\d+\\))$",
+      "VARCHAR": "^(VARCHAR\\(\\d+\\))$",
+      "INT": "^(INT)$",
+      "TIMESTAMP": "^(TIMESTAMP)$",
+      "TINYINT": "^(TINYINT)$",
+      "DECIMAL": "$(DECIMAL\\(\\d+,\\s*\\d+\\))$"
+    },
+    "audit_columns": [
+      {
+        "name": "registered_at",
+        "type_regex": "^(TIMESTAMP)$",
+        "notnull": "NN",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "registered_by",
+        "type_regex": "^(VARCHAR\\(36\\))$",
+        "notnull": "NN",
+        "default": "-"
+      },
+      {
+        "name": "updated_at",
+        "type_regex": "^(TIMESTAMP)$",
+        "notnull": "-",
+        "default": "NULL"
+      },
+      {
+        "name": "updated_by",
+        "type_regex": "^(VARCHAR\\(36\\))$",
+        "notnull": "-",
+        "default": "NULL"
+      },
+      {
+        "name": "is_deleted",
+        "type_regex": "^TINYINT$",
+        "notnull": "NN",
+        "default": "0"
+      }
+    ]
   }
 }
 ```
