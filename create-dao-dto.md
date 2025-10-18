@@ -356,7 +356,7 @@ describe('TableNameDaoのテスト', () => {
 ## Moduleコード設計
 
 - Moduleコードは、作成したすべてのDAOコードを依存性注入可能な部品としてサービス層に提供する。
-- クラス名は`DataBaseModule`固定とする。
+- クラス名は`DatabaseModule`固定とする。
 - Moduleコードに`@Global()`アノテーションを付与してはならない。
 
 ### Moduleコードファイル名
@@ -377,7 +377,7 @@ describe('TableNameDaoのテスト', () => {
     // 作成したすべてのDaoを記載する
   ],
 })
-export class DataBaseModule {}
+export class DatabaseModule {}
 ```
 
 ### Moduleテストコード設計
@@ -389,7 +389,7 @@ export class DataBaseModule {}
 ### Moduleテストコードの実装内容
 
 ```TypeScript
-describe('DataBaseModuleのテスト', () => {
+describe('DatabaseModuleのテスト', () => {
     describe('正常系', () => {
         test('モジュールが正常にコンパイルできる場合', () => {
             // テストコードを実装
