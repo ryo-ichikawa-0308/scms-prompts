@@ -1,0 +1,13 @@
+{
+  "prompt": "/workspaces/prompts/gemini_script/test/prompt.md",
+  "inputs": {
+    "QUIZ_SINGLE": [
+      "/workspaces/prompts/gemini_script/test/quiz0.md"
+    ],
+    "QUIZ_MULTI": [
+      "/workspaces/prompts/gemini_script/test/quiz1.md",
+      "/workspaces/prompts/gemini_script/test/quiz2.md",
+      "/workspaces/prompts/gemini_script/test/quiz3.md"
+    ]
+  }
+}

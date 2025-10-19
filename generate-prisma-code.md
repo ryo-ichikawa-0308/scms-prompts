@@ -246,8 +246,8 @@ schema.prisma
 
 ## テーブル一覧
 
-(TableListHere)
+{TableListHere}
 
 ## テーブル個別定義書
 
-(TableDocumentsHere)
+{TableDocumentsHere}

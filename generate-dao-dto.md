@@ -459,4 +459,4 @@ table_name.dao.spec.ts
 
 ## Prismaコード
 
-(PrismaCodeHere)
+{PrismaCodeHere}

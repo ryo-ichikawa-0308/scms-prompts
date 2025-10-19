@@ -300,12 +300,12 @@
 
 ## Prismaコード
 
-(PrismaCodeHere)
+{PrismaCodeHere}
 
 ## API一覧
 
-(ApiListHere)
+{ApiListHere}
 
 ## API個別定義書
 
-(ApiDocumentsHere)
+{ApiDocumentsHere}

@@ -9,4 +9,13 @@
 * **[generate-prisma-code.md](./generate-prisma-code.md)** DB設計書からPrismaコードを自動生成するプロンプト。Pythonなどのスクリプトから生成AIのAPIに送信し、そのレスポンスをスクリプト側で解析して実コードに分離することを想定している。
 * **[generate-dao-dto.md](./generate-dao-dto.md)** PrismaコードからDAO層のコードを自動生成するプロンプト。Pythonなどのスクリプトから生成AIのAPIに送信し、そのレスポンスをスクリプト側で解析して実コードに分離することを想定している。
 
+## スクリプト
+
+* **[gemini_script](./gemini_script/)** 上記のプロンプトをGeminiで実行するためのスクリプト(簡易版)。APIキーを設定したファイル`api.ini`が必要です。[simple-contract-management-system](https://github.com/ryo-ichikawa-0308/simple-contract-management-system)の開発コンテナを使用しない場合は、手動で作成してください。
+
+```ini
+[GEMINI]
+API_KEY=YOUR_GEMINI_API_KEY
+```
+
 (C)2025 Ryo ICHIKAWA
