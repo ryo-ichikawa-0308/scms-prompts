@@ -11,7 +11,7 @@
 
 ## スクリプト
 
-* **[gemini_script](./gemini_script/)** 上記のプロンプトをGeminiで実行するためのスクリプト(簡易版)。APIキーを設定したファイル`api.ini`が必要です。[simple-contract-management-system](https://github.com/ryo-ichikawa-0308/simple-contract-management-system)の開発コンテナを使用しない場合は、手動で作成してください。
+* **[gemini_script](./gemini_script/)** 上記のプロンプトをGeminiで実行するためのスクリプト(簡易版)。APIキーを設定したファイル`api.ini`が必要です。手動で下記の内容のファイルを作成してください。
 
 ```ini
 [GEMINI]
