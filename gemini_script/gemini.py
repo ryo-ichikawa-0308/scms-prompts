@@ -161,6 +161,8 @@ def call_gemini_api(prompt_text, settings):
 
     # 4. 結果の受領と分割
     response_text = response.text
+    # デバッグ用: レスポンス確認
+    # print(response_text)
     separator = settings['separator']
     
     # セパレータで分割。strip()で前後の空白を除去
@@ -211,9 +213,9 @@ def main():
         final_prompt = read_prompt_and_replace(settings)
         
         # デバッグ用: 最終的なプロンプトの確認
-        print("\n--- 最終的なプロンプト ---")
-        print(final_prompt)
-        print("--------------------------\n")
+        # print("\n--- 最終的なプロンプト ---")
+        # print(final_prompt)
+        # print("--------------------------\n")
         
         # 3. API処理 & 4. 結果の受領と分割
         response_parts = call_gemini_api(final_prompt, settings)

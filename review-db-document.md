@@ -273,10 +273,6 @@
 ------
 ```
 
-## テーブル一覧
+{TABLE_LIST}
 
-{TableListHere}
-
-## テーブル個別定義書
-
-{TableDocumentsHere}
+{TABLE_DOCUMENTS}

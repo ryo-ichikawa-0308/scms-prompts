@@ -298,14 +298,8 @@
 ------
 ```
 
-## Prismaコード
+{PRISMA_CODE}
 
-{PrismaCodeHere}
+{API_LIST}
 
-## API一覧
-
-{ApiListHere}
-
-## API個別定義書
-
-{ApiDocumentsHere}
+{API_DOCUMENTS}
