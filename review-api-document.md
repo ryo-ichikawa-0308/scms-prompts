@@ -308,4 +308,4 @@
 
 ## API個別定義書
 
-(ApiDocumentHere)
+(ApiDocumentsHere)
