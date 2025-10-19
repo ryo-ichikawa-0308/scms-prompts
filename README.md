@@ -1,4 +1,4 @@
-# scms-prompts
+# scms-prompts(暫定公開版)
 
 本作品群は、[simple-contract-management-system](https://github.com/ryo-ichikawa-0308/simple-contract-management-system)において、AIガバナンスを行う、あるいはAIでコードを自動生成する際に用いるプロンプトである。これらのプロンプトをCI過程に組み込むことにより、DevOpsの向上を図ることが可能である。
 
