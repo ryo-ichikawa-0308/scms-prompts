@@ -11,7 +11,7 @@
 
 ## スクリプト
 
-* **[gemini_script](./gemini_script/)** 上記のプロンプトをGeminiで実行するためのスクリプト(簡易版)。APIキーを設定したファイル`api.ini`が必要です。手動で下記の内容のファイルを作成してください。
+* **[gemini_script](./gemini_script/)** 上記のプロンプトをGeminiで動作確認するためのスクリプト(簡易版)。APIキーを設定したファイル`api.ini`が必要です。手動で下記の内容のファイルを作成してください。
 
 ```ini
 [GEMINI]
