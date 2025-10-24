@@ -12,6 +12,8 @@
 * **[generate-json-from-db-docs.md](./generate-json-from-db-docs.md)** DB設計書をJSON形式に変換するプロンプト。下記の自動レビュープロンプト(JSON版)のインプットとする想定である。
 * **[review-db-json.md](./review-db-json.md)** DB設計書(JSON版)を自動レビューするためのプロンプト。業務的な要件は人手で確認されていることが前提である。Markdown直接レビューよりも高効率を期待できる。
 
+* **[generate-json-from-api-docs.md](./generate-json-from-api-docs.md)** API設計書をJSON形式に変換するプロンプト。
+
 ## スクリプト
 
 * **[gemini_script](./gemini_script/)** 上記のプロンプトをGeminiで動作確認するためのスクリプト(簡易版)。APIキーを設定したファイル`api.ini`が必要です。手動で下記の内容のファイルを作成してください。
