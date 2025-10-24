@@ -37,6 +37,8 @@ Prismaコードに基づいて、下記の2つのクラスを定義する。
 - クラス名をSelectTableNameDtoとする。
 - クラスコメントとして`[モデル名]の標準検索用DTO`を付与する。
 - 監査フィールド(登録日時、登録者、更新日時、更新者、削除フラグ)以外の項目をフィールドとして持つ。
+- ページング処理を想定した検索のため、整数型の任意項目`offset`と`limit`を持つ。
+  - `offset` と `limit`はコーディング規約上予約語(ページングパラメータ以外に定義禁止)として扱われている前提である。
 - フィールドコメントとして、`[フィールド名]`を付与する。
 - すべての項目を任意項目とする。
 - Prismaのフィールドが数値型の場合はDTOの項目は数値型とする。型や精度(整数型、浮動小数点型、10進数型等)はPrismaフィールドの定義に準ずる。
@@ -151,6 +153,27 @@ selectTableNameは、下記のPrisma例外を処理する。
 
 - **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
 
+#### 計数メソッド
+
+```TypeScript
+/**
+ * TableNameの件数を取得する
+ * @param dto TableNameの検索用DTO
+ * @returns 取得したレコードの件数
+ */
+countTableName(dto: SelectTableNameDto): Promise<number>{}
+```
+
+countTableNameは、検索条件に当てはまるデータが存在しない場合は0を返す。0の場合の処理(後続ロジック実行、NotFoundException)は呼び出し元のサービスクラスで行うため、DAOは感知しない。
+
+countTableNameは、検索条件として、「論理削除されていないこと」(`isDeleted: false`)を必須とする。
+
+countTableNameの要件に当てはまらない検索(他テーブルとの結合、論理削除されているレコードの抽出)は手動で作成するため、本プロンプトの対象外とする。
+
+countTableNameは、下記のPrisma例外を処理する。
+
+- **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
+
 #### 登録メソッド
 
 ```TypeScript
@@ -258,6 +281,27 @@ describe('TableNameDaoのテスト', () => {
                 // isDeleted: falseを条件にしていることを確認する。
             });
             test('0件の結果が返る場合', () => {
+                // テストコードを実装
+                // isDeleted: falseを条件にしていることを確認する。
+            });
+        });
+        describe('異常系', () => {
+            test('DB接続エラーが発生した場合', () => {
+                // テストコードを実装
+            });
+        });
+    });
+    describe('countTableNameのテスト', () => {
+        describe('正常系', () => {
+            test('1が返る場合', () => {
+                // テストコードを実装
+                // isDeleted: falseを条件にしていることを確認する。
+            });
+            test('2以上が返る場合', () => {
+                // テストコードを実装
+                // isDeleted: falseを条件にしていることを確認する。
+            });
+            test('0が返る場合', () => {
                 // テストコードを実装
                 // isDeleted: falseを条件にしていることを確認する。
             });
