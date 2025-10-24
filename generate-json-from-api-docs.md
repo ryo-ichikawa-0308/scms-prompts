@@ -17,8 +17,8 @@ API一覧は、マークダウンの表形式で記述されている。記述�
 | ファイルパス   | path           |
 | エンドポイント | endpoint       |
 | メソッド       | method         |
-| 系統           | type           |
-| 認証要否       | needAuth       |
+| 系統           | category       |
+| 認証要否       | authRequired   |
 | 備考           | note           |
 
 - API名は、[API名](filepath)の形式で記載されている。下記のとおり抽出し、JSONの項目値とせよ。
@@ -62,8 +62,8 @@ API概要は、マークダウンの表形式(実質的に箇条書き)で記述
 | API名          | name           |
 | エンドポイント | endpoint       |
 | メソッド       | method         |
-| 系統           | type           |
-| 認証要否       | needAuth       |
+| 系統           | category       |
+| 認証要否       | authRequired   |
 | データ形式     | dataType       |
 
 「備考」欄の記載は自動レビューやスケルトンコード作成に直接寄与しないため、取得不要である。また、上記6項目に欠落がある場合、""(空文字)で補完し、[ERROR]としてログに記録せよ。
@@ -223,8 +223,8 @@ API一覧及びAPI個別設計書群の処理結果を統合し、下記のフ�
       "path": "{API_FILE_PATH}",
       "endpoint": "{API_ENDPOINT}",
       "method": "{API_METHOD}",
-      "type": "{API_SYSTEM_TYPE}",
-      "needAuth": {NEED_AUTH_BOOLEAN},
+      "category": "{API_SYSTEM_TYPE}",
+      "authRequired": {AUTH_REQUIRED_BOOLEAN},
       "note": "{API_LIST_NOTE}"
     }
   ],
@@ -234,8 +234,8 @@ API一覧及びAPI個別設計書群の処理結果を統合し、下記のフ�
         "name": "{API_NAME_TEXT}",
         "endpoint": "{API_ENDPOINT}",
         "method": "{API_METHOD}",
-        "type": "{API_SYSTEM_TYPE}",
-        "needAuth": {NEED_AUTH_BOOLEAN},
+        "category": "{API_SYSTEM_TYPE}",
+        "authRequired": {AUTH_REQUIRED_BOOLEAN},
         "dataType": "{API_DATA_TYPE}"
       },
       "requestHeader": [
