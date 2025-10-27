@@ -4,15 +4,20 @@
 
 ## プロンプト一覧
 
-* **[review-db-document.md](./review-db-document.md)** DB設計書を自動レビューするためのプロンプト。業務的な要件は人手で確認されていることが前提である。
-* **[review-api-document.md](./review-api-document.md)** API設計書を自動レビューするためのプロンプト。DB設計書に忠実に実装されたPrismaコードが存在することが前提である。
-* **[generate-prisma-code.md](./generate-prisma-code.md)** DB設計書からPrismaコードを自動生成するプロンプト。Pythonなどのスクリプトから生成AIのAPIに送信し、そのレスポンスをスクリプト側で解析して実コードに分離することを想定している。
 * **[generate-dao-dto.md](./generate-dao-dto.md)** PrismaコードからDAO層のコードを自動生成するプロンプト。Pythonなどのスクリプトから生成AIのAPIに送信し、そのレスポンスをスクリプト側で解析して実コードに分離することを想定している。
 
 * **[generate-json-from-db-docs.md](./generate-json-from-db-docs.md)** DB設計書をJSON形式に変換するプロンプト。下記の自動レビュープロンプト(JSON版)のインプットとする想定である。
 * **[review-db-json.md](./review-db-json.md)** DB設計書(JSON版)を自動レビューするためのプロンプト。業務的な要件は人手で確認されていることが前提である。Markdown直接レビューよりも高効率を期待できる。
 
 * **[generate-json-from-api-docs.md](./generate-json-from-api-docs.md)** API設計書をJSON形式に変換するプロンプト。
+
+## プロンプト一覧(旧作)
+
+Markdownを直接レビューする想定で作成したプロンプト。MarkdownをJSON化してレビューさせたほうが正確性を期待できるので、下記の作品は「JSON化して突き合わせ」のアイディアに至る経過の作品として残しています。
+
+* **[review-db-document.md](./old/review-db-document.md)** DB設計書を自動レビューするためのプロンプト。業務的な要件は人手で確認されていることが前提である。
+* **[generate-prisma-code.md](./old/generate-prisma-code.md)** DB設計書からPrismaコードを自動生成するプロンプト。Pythonなどのスクリプトから生成AIのAPIに送信し、そのレスポンスをスクリプト側で解析して実コードに分離することを想定している。
+* **[review-api-document.md](./old/review-api-document.md)** API設計書を自動レビューするためのプロンプト。DB設計書に忠実に実装されたPrismaコードが存在することが前提である。
 
 ## スクリプト
 
