@@ -115,99 +115,99 @@
 - `columns.typeAndSize` カラムの型、桁数、精度を示す。下記の変換ルールに従い、Prisma型定義に変換する。
   - `VARCHAR(N)`
     - Prisma Type: `String`
-    - 属性指定: `N`を桁数として抽出し、`@db.VarChar(N)`の属性指定を付加する。
+    - アトリビュート: `N`を桁数として抽出し、`@db.VarChar(N)`のアトリビュートを付加する。
   - `CHAR(N)`
     - Prisma Type: `String`
-    - 属性指定: `N`を桁数として抽出し、`@db.Char(N)`の属性指定を付加する。
+    - アトリビュート: `N`を桁数として抽出し、`@db.Char(N)`のアトリビュートを付加する。
   - `MEDIUMTEXT` `TEXT`
     - Prisma Type: `String`
-    - 属性指定: `@db.MediumText`の属性指定を付加する。
+    - アトリビュート: `@db.MediumText`のアトリビュートを付加する。
   - `INTEGER`
     - Prisma Type: `Int`
-    - 属性指定: `@db.Int`の属性指定を付加する。
+    - アトリビュート: `@db.Int`のアトリビュートを付加する。
   - `SMALLINT`
     - Prisma Type: `Int`
-    - 属性指定: `@db.SmallInt`の属性指定を付加する。
+    - アトリビュート: `@db.SmallInt`のアトリビュートを付加する。
   - `MEDIUMINT`
     - Prisma Type: `Int`
-    - 属性指定: `@db.MediumInt`の属性指定を付加する。
+    - アトリビュート: `@db.MediumInt`のアトリビュートを付加する。
   - `TINYINT`
     - Prisma Type: `Int`
-    - 属性指定: `@db.TinyInt`の属性指定を付加する。
+    - アトリビュート: `@db.TinyInt`のアトリビュートを付加する。
     - 備考: 桁数指定がない`TINYINT`は数値として扱う。
   - `BIGINT`
     - Prisma Type: `BigInt`
-    - 属性指定: `@db.BigInt`の属性指定を付加する。
+    - アトリビュート: `@db.BigInt`のアトリビュートを付加する。
   - `REAL`
     - Prisma Type: `Float`
-    - 属性指定: `@db.Float`の属性指定を付加する。
+    - アトリビュート: `@db.Float`のアトリビュートを付加する。
   - `FLOAT(N)`
     - Prisma Type: `Float`
-    - 属性指定: `N`が25以上の場合は`@db.Double`、24以下の場合は`@db.Float`を付加する。
+    - アトリビュート: `N`が25以上の場合は`@db.Double`、24以下の場合は`@db.Float`を付加する。
     - 備考: MySQL前提のため、N=25を境にDOUBLEとして扱う。
   - `DECIMAL(P, S)`
     - Prisma Type: `Decimal`
-    - 属性指定: `P`を桁数、`S`を精度として抽出し、`@db.Decimal(P, S)`の属性指定を付加する。
+    - アトリビュート: `P`を桁数、`S`を精度として抽出し、`@db.Decimal(P, S)`のアトリビュートを付加する。
   - `NUMERIC(P, S)`
     - Prisma Type: `Decimal`
-    - 属性指定: `P`を桁数、`S`を精度として抽出し、`@db.Decimal(P, S)`の属性指定を付加する。
+    - アトリビュート: `P`を桁数、`S`を精度として抽出し、`@db.Decimal(P, S)`のアトリビュートを付加する。
   - `BOOLEAN` `BOOL`
     - Prisma Type: `Boolean`
-    - 属性指定: `@db.Boolean`の属性指定を付加する。
+    - アトリビュート: `@db.Boolean`のアトリビュートを付加する。
   - `TINYINT(1)`
   - Prisma Type: `Boolean`
-    - 属性指定: `@db.TinyInt`の属性指定を付加する。
+    - アトリビュート: `@db.TinyInt`のアトリビュートを付加する。
   - `BIT`
     - Prisma Type: `Boolean`
-    - 属性指定: `@db.Bit`の属性指定を付加する。
+    - アトリビュート: `@db.Bit`のアトリビュートを付加する。
     - 備考: SQL Server固有のため、設定されている場合は[WARN]としてログ出力せよ。
   - `DATE`
     - Prisma Type: `DateTime`
-    - 属性指定: `@db.Date`の属性指定を付加する。
+    - アトリビュート: `@db.Date`のアトリビュートを付加する。
   - `TIME`
     - Prisma Type: `DateTime`
-    - 属性指定: `@db.Time`の属性指定を付加する。
+    - アトリビュート: `@db.Time`のアトリビュートを付加する。
   - `TIMESTAMP(N)`
     - Prisma Type: `DateTime`
-    - 属性指定: `@db.Timestamp(N)`の属性指定を付加する。
+    - アトリビュート: `@db.Timestamp(N)`のアトリビュートを付加する。
     - 備考: 桁数指定がない場合、「[ADVICE] テーブル[TABLE_NAME] カラム[COLUMN_NAME]: TIMESTAMP型に桁数指定がないため、ミリ秒精度(3)を推論し@db.DateTime(3)として処理を続行します。」をログ出力せよ。
   - `DATETIME(N)`
     - Prisma Type: `DateTime`
-    - 属性指定: `@db.DateTime(N)`の属性指定を付加する。
+    - アトリビュート: `@db.DateTime(N)`のアトリビュートを付加する。
     - 備考: 桁数指定がない場合、「[ADVICE] テーブル[TABLE_NAME] カラム[COLUMN_NAME]: DATETIME型に桁数指定がないため、ミリ秒精度(3)を推論し@db.DateTime(3)として処理を続行します。」をログ出力せよ。
   - `JSON`
     - Prisma Type: `Json`
-    - 属性指定: `@db.Json`の属性指定を付加する。
+    - アトリビュート: `@db.Json`のアトリビュートを付加する。
   - `JSONB`
     - Prisma Type: `Json`
-    - 属性指定: `@db.Json`の属性指定を付加する。
+    - アトリビュート: `@db.Json`のアトリビュートを付加する。
     - 備考: PostgreSQL固有の型だが、MySQLのJSONにマッピングし、[WARN]としてログ出力せよ。
   - `BYTEA`
     - Prisma Type: `Bytes`
-    - 属性指定: `@db.Binary`の属性指定を付加する。
+    - アトリビュート: `@db.Binary`のアトリビュートを付加する。
     - 備考: PostgreSQL固有のため、設定されている場合は[WARN]としてログ出力せよ。
   - `BLOB`
     - Prisma Type: `Bytes`
-    - 属性指定: `@db.Blob`の属性指定を付加する。
+    - アトリビュート: `@db.Blob`のアトリビュートを付加する。
   - `ENUM`
     - Prisma Type: 未対応
-    - 属性指定: 「[ERROR]未対応の型(ENUM)が検出されました。」をログ出力し、生成処理を中止してログのみ出力する。
+    - アトリビュート: 「[ERROR]未対応の型(ENUM)が検出されました。」をログ出力し、生成処理を中止してログのみ出力する。
     - 備考: Enum定義は本プロンプトのスコープ外であり、対応するためには追加のドキュメント構造が必要。
   - (不明な型)
     - Prisma Type: `String`
-    - 属性指定: なし
+    - アトリビュート: なし
     - 備考: 「[WARN] テーブル[TABLE_NAME] カラム[COLUMN_NAME]: 未対応のRDBMS型'UNKNOWN_TYPE'が検出されました。Prisma型をStringとして処理を続行します。」をログ出力し、String型として処理続行する。
 
 - `columns.isPrimaryKey === true`の場合、当該カラムにPRIMARY KEY制約を付与するため、以下のロジックでアトリビュートを設定する。
-  - 同一テーブル内で複数のカラムに`columns.isPrimaryKey === true`が設定されている場合は(複合主キー)、すべてのPKに関する処理をここでスキップし、テーブルの最後に`@@id([{カラムリスト}])`アトリビュートとして集約して生成する。
+  - 同一テーブル内で複数のカラムに`columns.isPrimaryKey === true`が設定されている場合は(複合主キー)、当該テーブルのPKに関する処理をスキップし、テーブルの最後に`@@id([{カラムリスト}])`アトリビュートとして集約して生成する。
   - 同一テーブル内で単一のカラムに`columns.isPrimaryKey === true`が設定されている場合は、当該カラムに`@id`アトリビュートを付与する。
 - `columns.isForeignKey === true`の場合、当該カラムにFOREIGN KEY制約を付与する。後続の外部キー定義で詳細な設定を行う。
 - `columns.unique`の配列に`UKn`が格納されている場合、当該カラムにUNIQUE制約を付与するため、以下のロジックでアトリビュートを設定する。
   - 前提: `n`はユニークキーを設定するカラムの組み合わせを識別するための通し番号。同一テーブル内で、ユニークキーを設定するカラム群ごとに一意な番号である。
   - 同一テーブル内で`UKn`が単一のカラムに対して設定されている場合、当該カラムに`@unique`アトリビュートを付与する。
-  - 同一テーブル内で`UKn`が複数のカラムに跨って設定されている場合、当該カラムに`@@unique([{カラムリスト}])`アトリビュートを付与する。
+  - 同一テーブル内で`UKn`が複数のカラムに跨って設定されている場合、当該カラム群に`@@unique([{カラムリスト}])`アトリビュートを付与する。
 - `columns.isNotNull`の設定に応じて当該カラムにNOT NULL制約を付与するため、以下のロジックでアトリビュートを設定する。
-  - `columns.isNotNull === true`の場合、Prisma型定義の後に`?`(Optionality)を付与しない。
+  - `columns.isNotNull === true`の場合は、Prisma型定義の後に`?`(Optionality)を付与しない。
   - `columns.isNotNull === false`の場合は、`?`を付与する。
 - `columns.defaultValue === ""`以外の場合、当該カラムのDEFAULT値を付与するため、以下のロジックで`@default({値})`アトリビュートを設定する。
   - 当該テーブルが単一の`PK`項目を持つ場合、下記のロジックでサロゲートキーのデフォルト値を設定する。
@@ -230,7 +230,7 @@
   - **PK/UKとの重複排除:** カラム定義セクションで`PK`として指定されている単一カラム、または`UKn`が設定されているカラムと、インデックスのカラムリストが完全に一致する場合、そのインデックス定義はRDBMSで自動作成されるとみなし、`@@index`の生成をスキップする。その際、ログに警告メッセージ「[WARN]主キーと重複しているインデックス作成をスキップしました。」を出力する。
 - `indexes.isUnique === true`の場合は、`@@unique([{カラムリスト}])`アトリビュートとして生成する。それ以外の場合は、`@@index([{カラムリスト}])`アトリビュートとして生成する。
 - `indexes.indexType`の設定値に基づいて、作成するインデックスの種類を取得する。
-  - `B-Tree`の場合はB-Treeインデックスとして作成する。
+  - `B-Tree`の場合は、B-Treeインデックスとして作成する。
   - `Hash`の場合は、Prismaの標準機能としてサポートされていないため、`@@index`として処理しつつ、ログに「[WARN]HashインデックスはPrismaでネイティブサポートされないため、標準インデックスとして処理します。」を出力する。
 - `indexes.sortOrder`の設定値から、`B-Tree`インデックスのソート順を取得する。カラムリストの並び順に対応して、`(sort: Asc)` `(sort: Desc)`の設定を行う。`indexes.sortOrder === null`の場合はオプションを省略する。
 - `indexes.note`の設定値は、変換に直接寄与しない項目のため、読み飛ばす。
