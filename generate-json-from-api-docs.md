@@ -10,21 +10,24 @@
 
 API一覧は、マークダウンの表形式で記述されている。記述内容を下記の構造を持つオブジェクトの配列に変換せよ。配列のキーは`apiList`とせよ。
 
-| 項目           | 変換後のキー名 |
-| -------------- | -------------- |
-| No             | no             |
-| API名          | name           |
-| ファイルパス   | path           |
-| エンドポイント | endpoint       |
-| メソッド       | method         |
-| 系統           | category       |
-| 認証要否       | authRequired   |
-| 備考           | note           |
+| 項目             | 変換後のキー名 |
+| ---------------- | -------------- |
+| No               | no             |
+| API名            | name           |
+| ファイルパス     | path           |
+| エンドポイント   | endpoint       |
+| リソース         | resource       |
+| アクション       | action         |
+| メソッド         | method         |
+| ビジネスドメイン | category       |
+| 認証要否         | authRequired   |
+| 備考             | note           |
 
 - API名は、[API名](filepath)の形式で記載されている。下記のとおり抽出し、JSONの項目値とせよ。
   - API名項目から、Markdownリンクの**リンクテキスト部分: [ ]内**を抽出し、nameキーの値とせよ。
   - Markdownリンクの**URL部分: ( )内**を抽出し、pathキーの値とせよ。
-  - 抽出できなかった場合は、それぞれ""(空文字)とせよ。
+  - [API名](filepath)形式でなかった場合は、記載内容をそのまま文字列として`name`の要素とし、`path`は""(空文字)とせよ。また、[WARN]としてログに記録せよ。
+  - [API名](filepath)形式で、かつ、各項目が抽出できなかった場合は、その要素を""(空文字)とし、[WARN]としてログに記録せよ。
 
 - 系統は、下記の通り変換せよ。下記以外の値が設定されている場合、[ERROR]としてログに記録せよ。
   - **取得:** `read`
@@ -48,23 +51,25 @@ API個別設計書は下記の4セクションで構成される。それぞれ�
 
 1. API概要
 2. リクエストヘッダ
-3. リクエスト
+3. リクエスト(リクエストボディ、パスパラメータ、URLパラメータ)
 4. 処理概要
 5. レスポンス
 6. エラー定義
 
 ### 1. API概要のJSON変換
 
-API概要は、マークダウンの表形式(実質的に箇条書き)で記述されている。記述内容を下記のオブジェクトに変換せよ。各キー値の設定方法は「API一覧のJSON変換」と同じである。オブジェクトのキーは`summary`とせよ。
+API概要は、マークダウンの表形式(実質的に箇条書き)で記述されている。記述内容を下記のオブジェクトに変換せよ。各キー値の設定方法は「API一覧のJSON変換」と同じである。なお、個別設計書においては、API名にリンクは含まれない。オブジェクトのキーは`summary`とせよ。
 
-| 項目           | 変換後のキー名 |
-| -------------- | -------------- |
-| API名          | name           |
-| エンドポイント | endpoint       |
-| メソッド       | method         |
-| 系統           | category       |
-| 認証要否       | authRequired   |
-| データ形式     | dataType       |
+| 項目             | 変換後のキー名 |
+| ---------------- | -------------- |
+| API名            | name           |
+| エンドポイント   | endpoint       |
+| リソース         | resource       |
+| アクション       | action         |
+| メソッド         | method         |
+| ビジネスドメイン | category       |
+| 認証要否         | authRequired   |
+| データ形式       | dataType       |
 
 「備考」欄の記載は自動レビューやスケルトンコード作成に直接寄与しないため、取得不要である。また、上記6項目に欠落がある場合、""(空文字)で補完し、[ERROR]としてログに記録せよ。
 
@@ -134,14 +139,14 @@ API概要は、マークダウンの表形式(実質的に箇条書き)で記述
     - それ以上の詳細なチェックは、後続レビューの責務であるため、本プロンプトでは対応しない。
   - **最小桁数/最大桁数:**
     - 0以上の整数として解釈できる場合は数値型で出力せよ。
-    - 空欄または`-`の場合は、`null`とせよ。それ以外の場合は`null`とし、[ERROR]としてログに記録せよ。
+    - 空欄または`-`の場合は、`null`とせよ。非数値文字列の場合は`null`とし、[ERROR]としてログに記録せよ。
     - `type`が`string`以外の項目に対して、空欄または`-`以外の値が設定されている場合は`null`とし、[ERROR]としてログに記録せよ。
     - 最大桁数・最小桁数が`null`以外の設定値となり、かつ、最大桁数の設定が最小桁数の設定未満となる場合、[ERROR]としてログに記録せよ。
   - **最大値/最小値:**
-    - `type`が数値型の場合、値が数値として解釈できる場合はnumber型で出力せよ。`-`の場合は、`null`とせよ。それ以外は`null`とし、[ERROR]としてログに記録せよ。
-    - `type`が`date`の場合、値が日付文字列として解釈できる場合 (例: `YYYY-MM-DD`形式) はstring型でそのまま出力せよ。それ以外は`null`とし、[ERROR]としてログに記録せよ。この値は後続ステップで`@MinDate` / `@MaxDate`の引数として利用される前提である。
-    - `type`が`array`の場合、配列長の制限と解釈し、0以上の整数として解釈できる場合はnumber型で出力せよ。`-`の場合は、`null`とせよ。それ以外は`null`とし、[ERROR]としてログに記録せよ。
-    - `type`が上記以外の場合、値が空欄または`-`の場合は、`null`とせよ。それ以外は`null`とし、[ERROR]としてログに記録せよ。
+    - `type`が数値型の場合、値が数値として解釈できる場合はnumber型で出力せよ。`-`の場合は、`null`とせよ。非数値文字列の場合は`null`とし、[ERROR]としてログに記録せよ。
+    - `type`が`date`の場合、値が日付文字列として解釈できる場合 (例: `YYYY-MM-DD`形式) はstring型でそのまま出力せよ。日付文字列ではない場合は`null`とし、[ERROR]としてログに記録せよ。この値は後続ステップで`@MinDate` / `@MaxDate`の引数として利用される前提である。
+    - `type`が`array`の場合、配列長の制限と解釈し、0以上の整数として解釈できる場合はnumber型で出力せよ。`-`の場合は、`null`とせよ。0以上の整数として解釈できない場合は`null`とし、[ERROR]としてログに記録せよ。
+    - `type`が上記以外の場合、値が空欄または`-`の場合は、`null`とせよ。空欄・`-`以外の場合は`null`とし、[ERROR]としてログに記録せよ。
     - 最大値・最小値が`null`以外の設定値となり、かつ、最大値の設定が最小値の設定未満となる場合、[ERROR]としてログに記録せよ。
   - **空欄処理:** フォーマット、備考が空欄または`-`の場合は、""(空文字)とせよ。
 
@@ -154,21 +159,27 @@ API概要は、マークダウンの表形式(実質的に箇条書き)で記述
     - [ADVICE]：項目 "{物理名}" はネストが4段目に到達しています。データ構造の複雑性、テーブル結合および実装コードの可読性に影響を及ぼす可能性があるため、設計の分割(別API化)を検討することを推奨します。
     - [WARN]：項目 "{物理名}" はネストが5段以上に到達しており、極端な複雑性を示しています。即座に設計を見直し、構造をフラット化することを強く推奨します。
 
-#### `GET`メソッドのパラメータについて
-
-- メソッドが`GET`の場合、リクエストボディが存在しないため、「パスパラメータ」をキー`pathParameters`とするオブジェクト配列として、「URLパラメータ」をキー`urlParameters`とするオブジェクト配列として、同様に解釈せよ。
-- メソッドが`GET`の場合かつDB取得を前提とする場合、対象テーブルはエンドポイント定義で自明であり、検索キーはサロゲートキーのみが与えられている前提である。このため、DBテーブル/DBカラムが空欄あるいは`-`以外の場合は[WARN]としてログに記録せよ。
-- メソッドが`GET`の場合、パラメータは配列のインデックス順に与えられるものとし、パラメータを入れ子にしてはならない(違反がある場合は[ERROR]としてログに記録せよ)。
-- メソッドが`GET`の場合、エンドポイント定義のパラメータ定義`{parameterName}`の件数・物理名・並び順と、「リクエスト」セクションのパラメータ定義の件数・物理名・並び順が一致するかどうかを確認し、一致しない場合は[ERROR]としてログに記録せよ。
-
 #### `list`型取得APIのパラメータに関する助言
 
 - 取得系APIで、かつエンドポイントが`list`の場合かつ、下記のページングパラメータがリクエストに定義されていない場合、追加することを[ADVICE]としてログに記録せよ。
 
-| 論理名     | 物理名 | 型     | DBテーブル | DBカラム | 必須 | 最小桁数 | 最大桁数 | フォーマット | 最小値 | 最大値 | 備考                            |
-| ---------- | ------ | ------ | ---------- | -------- | ---- | -------- | -------- | ------------ | ------ | ------ | ------------------------------- |
-| 取得件数   | limit  | number | -          | -        | 必須 | -        | -        | 整数         | 1      | -      | ページングの1ページあたりの件数 |
-| オフセット | offset | number | -          | -        | 必須 | -        | -        | 整数         | 0      | -      | 取得開始位置(0から開始)         |
+| 論理名     | 物理名    | 型     | DBテーブル | DBカラム | 必須 | 最小桁数 | 最大桁数 | フォーマット | 最小値 | 最大値 | 備考 |
+| ---------- | --------- | ------ | ---------- | -------- | ---- | -------- | -------- | ------------ | ------ | ------ | ---- |
+| 取得件数   | limit     | number | -          | -        | 任意 | -        | -        | -            | 1      | 100    | -    |
+| オフセット | offset    | number | -          | -        | 任意 | -        | -        | -            | 0      | -      | -    |
+| ソートキー | sortBy    | string | -          | -        | 任意 | -        | -        | -            | -      | -      | -    |
+| ソート順   | sortOrder | string | -          | -        | 任意 | -        | -        | asc/desc     | -      | -      | -    |
+
+#### パスパラメータ及びURLパラメータのJSON変換
+
+- `### パスパラメータ`セクションをキー`pathParameters`とするオブジェクト配列として、`### URLパラメータ`セクションをキー`urlParameters`とするオブジェクト配列として、リクエストボディ同様に解釈せよ。
+- パスパラメータとURLパラメータは配列のインデックス順に与えられるものとし、パラメータを入れ子にしてはならない(違反がある場合は[ERROR]としてログに記録せよ)。
+- エンドポイント定義のパスパラメータ定義`{parameterName}`の件数・物理名・並び順と、「リクエスト」セクションのパスパラメータ定義の件数・物理名・並び順が一致するかどうかを確認し、一致しない場合は[ERROR]としてログに記録せよ。
+- エンドポイント定義のURLパラメータ定義`{parameterName: type}`の件数・物理名・型と、「リクエスト」セクションのURLパラメータ定義の件数・物理名・型が一致するかどうかを確認し、一致しない場合は[ERROR]としてログに記録せよ。
+
+#### パスパラメータのテーブルIDについて
+
+- DB操作を前提とする場合、対象テーブルはエンドポイント定義・リソース定義で自明であり、検索キーはサロゲートキーのみが与えられている前提である。このため、DBテーブル/DBカラムが空欄あるいは`-`の場合は[WARN]としてログに記録せよ。
 
 ### 4. 処理概要のJSON変換
 
@@ -192,6 +203,18 @@ API概要は、マークダウンの表形式(実質的に箇条書き)で記述
   - 但し、「必須」「最小桁数」「最大桁数」「フォーマット」「最小値」「最大値」はレスポンス項目には存在しないため、省略せよ。
   - レスポンスが「なし」の場合、空配列`[]`で記載せよ。
 
+#### `list`型取得APIのレスポンス項目に関する助言
+
+- 取得系APIで、かつエンドポイントが`list`の場合かつ、下記のページングパラメータがレスポンスに定義されていない場合、追加することを[ADVICE]としてログに記録せよ。
+
+| 論理名     | 物理名      | 型     | DBテーブル | DBカラム | 備考 |
+| ---------- | ----------- | ------ | ---------- | -------- | ---- |
+| 総件数     | totalCount  | number | -          | -        | -    |
+| 取得件数   | limit       | number | -          | -        | -    |
+| オフセット | offset      | number | -          | -        | -    |
+| 総ページ数 | totalPages  | number | -          | -        | -    |
+| 現在ページ | currentPage | number | -          | -        | -    |
+
 ### 6. エラー定義のJSON変換
 
 エラー定義は、マークダウンの表形式で記述されている。記述内容を下記の構造を持つオブジェクトの配列に変換せよ。オブジェクトのキーは`errors`とせよ。
@@ -214,7 +237,7 @@ API概要は、マークダウンの表形式(実質的に箇条書き)で記述
 
 API一覧及びAPI個別設計書群の処理結果を統合し、下記のフォーマットのJSONファイルとして出力せよ。"{}"は、取得した実際の文字列・設定値で読み替えるためのプレースホルダである。
 
-なお、API個別設計書群の配列は、API一覧の番号順にソートして出力せよ。
+なお、API個別設計書群の配列(`apis`)は、リソース名をキーにした配列の集合として記載し、各配列内では、API一覧のNo順にソートせよ。`apis`配下の項目`no`は、API一覧の対応する`no`の設定値を割り当てよ。
 
 ```JSON
 {
@@ -224,99 +247,110 @@ API一覧及びAPI個別設計書群の処理結果を統合し、下記のフ�
       "name": "{API_NAME_LINK_TEXT}",
       "path": "{API_FILE_PATH}",
       "endpoint": "{API_ENDPOINT}",
+      "resource": "{API_RESOURCE}",
+      "action": "{API_ACTION}",
       "method": "{API_METHOD}",
-      "category": "{API_SYSTEM_TYPE}",
+      "category": "{API_BUSINESS_DOMAIN}",
       "authRequired": {AUTH_REQUIRED_BOOLEAN},
       "note": "{API_LIST_NOTE}"
     }
   ],
   "apis": [
-    {
-      "summary": {
-        "name": "{API_NAME_TEXT}",
-        "endpoint": "{API_ENDPOINT}",
-        "method": "{API_METHOD}",
-        "category": "{API_SYSTEM_TYPE}",
-        "authRequired": {AUTH_REQUIRED_BOOLEAN},
-        "dataType": "{API_DATA_TYPE}"
-      },
-      "requestHeader": [
-        {
-          "name": "{HEADER_NAME}",
-          "required": {HEADER_REQUIRED_BOOLEAN},
-          "sample": "{HEADER_SAMPLE_VALUE}",
-          "note": "{HEADER_NOTE}"
-        }
-      ],
-      "pathParameters": [
-        {
-          "description": "{論理名}",
-          "name": "{物理名}",
-          "type": "{型}",
-          "required": {REQUIRED_BOOLEAN},
-          "minLength": {MIN_LENGTH_NUMBER_OR_NULL},
-          "maxLength": {MAX_LENGTH_NUMBER_OR_NULL},
-          "format": "{フォーマット}",
-          "min": {MIN_VALUE_NUMBER_DATE_OR_NULL},
-          "max": {MAX_VALUE_NUMBER_DATE_OR_NULL},
-          "note": "{備考}"
-        }
-      ],
-      "urlParameters": [
-        {
-          "description": "{論理名}",
-          "name": "{物理名}",
-          "type": "{型}",
-          "required": {REQUIRED_BOOLEAN},
-          "minLength": {MIN_LENGTH_NUMBER_OR_NULL},
-          "maxLength": {MAX_LENGTH_NUMBER_OR_NULL},
-          "format": "{フォーマット}",
-          "min": {MIN_VALUE_NUMBER_DATE_OR_NULL},
-          "max": {MAX_VALUE_NUMBER_DATE_OR_NULL},
-          "note": "{備考}"
-        }
-      ],
-      "requestBody": [
-        {
-          "description": "{論理名}",
-          "name": "{物理名}",
-          "type": "{型}",
-          "dbTable": "{DBテーブル}",
-          "dbColumn": "{DBカラム}",
-          "required": {REQUIRED_BOOLEAN},
-          "minLength": {MIN_LENGTH_NUMBER_OR_NULL},
-          "maxLength": {MAX_LENGTH_NUMBER_OR_NULL},
-          "format": "{フォーマット}",
-          "min": {MIN_VALUE_NUMBER_DATE_OR_NULL},
-          "max": {MAX_VALUE_NUMBER_DATE_OR_NULL},
-          "note": "{備考}",
-          "children": []
-        }
-      ],
-      "description": "{処理概要_TEXT}",
-      "response": {
-        "status": {RESPONSE_STATUS_NUMBER},
-        "body": [
-          {
-            "description": "{論理名}",
-            "name": "{物理名}",
-            "type": "{型}",
-            "dbTable": "{DBテーブル}",
-            "dbColumn": "{DBカラム}",
-            "note": "{備考}",
-            "children": []
-          }
-        ]
-      },
-      "errors": [
-        {
-          "status": {ERROR_STATUS_NUMBER},
-          "message": "{ERROR_MESSAGE_REQUIRED}",
-          "detail": "{ERROR_MESSAGE_DETAIL_OR_EMPTY}",
-          "description": "{ERROR_OCCURRENCE_CONDITION_OR_EMPTY}"
-        }
-      ]
-    }
+    "{API_RESOURCE}": [
+      {
+        "no": "{API_NO}",
+        "summary": {
+          "name": "{API_NAME_TEXT}",
+          "endpoint": "{API_ENDPOINT}",
+          "resource": "{API_RESOURCE}",
+          "action": "{API_ACTION}",
+          "method": "{API_METHOD}",
+          "category": "{API_BUSINESS_DOMAIN}",
+          "authRequired": {AUTH_REQUIRED_BOOLEAN},
+          "dataType": "{API_DATA_TYPE}"
+        },
+        "requestHeader": [
+          {
+            "name": "{HEADER_NAME}",
+            "required": {HEADER_REQUIRED_BOOLEAN},
+            "sample": "{HEADER_SAMPLE_VALUE}",
+            "note": "{HEADER_NOTE}"
+          }
+        ],
+        "pathParameters": [
+          {
+            "description": "{論理名}",
+            "name": "{物理名}",
+            "type": "{型}",
+            "dbTable": "{DBテーブル}",
+            "dbColumn": "{DBカラム}",
+            "required": {REQUIRED_BOOLEAN},
+            "minLength": {MIN_LENGTH_NUMBER_OR_NULL},
+            "maxLength": {MAX_LENGTH_NUMBER_OR_NULL},
+            "format": "{フォーマット}",
+            "min": {MIN_VALUE_NUMBER_DATE_OR_NULL},
+            "max": {MAX_VALUE_NUMBER_DATE_OR_NULL},
+            "note": "{備考}"
+          }
+        ],
+        "urlParameters": [
+          {
+            "description": "{論理名}",
+            "name": "{物理名}",
+            "type": "{型}",
+            "dbTable": "{DBテーブル}",
+            "dbColumn": "{DBカラム}",
+            "required": {REQUIRED_BOOLEAN},
+            "minLength": {MIN_LENGTH_NUMBER_OR_NULL},
+            "maxLength": {MAX_LENGTH_NUMBER_OR_NULL},
+            "format": "{フォーマット}",
+            "min": {MIN_VALUE_NUMBER_DATE_OR_NULL},
+            "max": {MAX_VALUE_NUMBER_DATE_OR_NULL},
+            "note": "{備考}"
+          }
+        ],
+        "requestBody": [
+          {
+            "description": "{論理名}",
+            "name": "{物理名}",
+            "type": "{型}",
+            "dbTable": "{DBテーブル}",
+            "dbColumn": "{DBカラム}",
+            "required": {REQUIRED_BOOLEAN},
+            "minLength": {MIN_LENGTH_NUMBER_OR_NULL},
+            "maxLength": {MAX_LENGTH_NUMBER_OR_NULL},
+            "format": "{フォーマット}",
+            "min": {MIN_VALUE_NUMBER_DATE_OR_NULL},
+            "max": {MAX_VALUE_NUMBER_DATE_OR_NULL},
+            "note": "{備考}",
+            "children": []
+          }
+        ],
+        "description": "{処理概要_TEXT}",
+        "response": {
+          "status": {RESPONSE_STATUS_NUMBER},
+          "body": [
+            {
+              "description": "{論理名}",
+              "name": "{物理名}",
+              "type": "{型}",
+              "dbTable": "{DBテーブル}",
+              "dbColumn": "{DBカラム}",
+              "note": "{備考}",
+              "children": []
+            }
+          ]
+        },
+        "errors": [
+          {
+            "status": {ERROR_STATUS_NUMBER},
+            "message": "{ERROR_MESSAGE_REQUIRED}",
+            "detail": "{ERROR_MESSAGE_DETAIL_OR_EMPTY}",
+            "description": "{ERROR_OCCURRENCE_CONDITION_OR_EMPTY}"
+          }
+        ]
+      },      
+    ],
   ]
 }
 ```
