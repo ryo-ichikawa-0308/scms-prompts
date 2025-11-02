@@ -4,7 +4,7 @@
 
 ## 前提
 
-- API一覧及びAPI個別設計書群が「JSON入力構造」セクションのとおり正しく変換されており、API設計書として正しくレビューされている。特に、データベースとの整合性は厳密にチェック済みである。
+- API一覧及びAPI個別設計書群が「JSON入力構造」セクションのとおり正しく変換されており、API設計書として正しくレビューされている。特に、データベースとの整合性は厳密にチェック済みである。本プロンプトは、API設計のJSON及び`schema.prisma`をsource of truthとする。
 - `schema.prisma`はデータベース定義書に忠実に作成されており、`schema.prisma`の各モデルに紐づいたテーブルDAOクラスが作成済みである。
 - APIはNestJSで実装し、エンタープライズアーキテクチャに基づいて下記の4種類のディレクトリで構成される。本プロンプトの担当範囲は、`domain`層及び`service`層であり、その他の層は適切に実装されているものとする。
   - `src.domain`
@@ -29,7 +29,8 @@
     - `database`層のモジュールは、`prisma`層のモジュールにのみ依存する。
   - `src.prisma`
     - `schema.prisma`を格納する。
-    - Prisma接続サービスを`PrismaModule`モジュールとして`database`層のモジュールに機能を提供する。また、`PrismaService`からトランザクション管理以外のメソッドを除去したトランザクションオブジェクト`PrismaTransaction`を`domain`層のオーケストレーションクラスに提供する。
+    - Prisma接続サービスを`PrismaModule`モジュールとして`database`層のモジュールに機能を提供する。
+    - トランザクション管理のため、`PrismaService`のインスタンスからトランザクション開始メソッド（`$transaction`）のみを公開する`PrismaTransaction`インターフェースを`domain`層に提供する。
 
 ## JSON入力構造
 
@@ -197,22 +198,29 @@ DBのカラムと紐づく項目は、DBカラムの物理名と同じ物理名�
 
 #### 2.1 共通 Paging DTO の適用と継承
 
-- 共通クラスの定義: `src/domain/common/dto/paging.dto.ts` に、共通の `PagingOptionsDto`(クエリオプション)および `PaginatedResponseDto<T>`(レスポンスラッパー)を必ず定義する。
-  - リクエストDTOへの継承: リスト取得系API(`summary.action === "list"`)の統合クエリDTO (`{Resource}{Action}QueryDto`) は、`PagingOptionsDto`を自動的に継承 (extends)する。
-  - レスポンスDTOへの適用: リスト系APIのレスポンスDTO (`{Resource}{Action}ResponseDto`) は、`PaginatedResponseDto<T>` を利用し、`<T>` にリストの要素DTO(ネスト要素DTO)を渡す形で定義する。
+- 共通クラスの定義: `src/domain/common/paging.dto.ts` に、共通の `PagingOptionsDto`(クエリオプション)および `PaginatedResponseDto<T>`(レスポンスラッパー)を定義する。
+  - リクエストDTOへの継承
+    - リスト取得系API(`summary.action === "list"`)の統合クエリDTO (`{Resource}{Action}QueryDto`) は、`PagingOptionsDto`を自動的に継承 (extends)する。
+    - `import { PagingOptionsDto } from 'src/domain/common/paging.dto';`でページングDTOの型をimportする。
+  - レスポンスDTOへの適用
+    - リスト系APIのレスポンスDTO (`{Resource}{Action}ResponseDto`) は、`PaginatedResponseDto<T>` を利用し、`<T>` にリストの要素DTO(ネスト要素DTO)を渡す形で定義する。
+    - `import { PaginatedResponseDto } from 'src/domain/common/paging.dto';`でページングDTOの型をimportする。
 
-#### 2.2 DTOのバリデーションとOpenAPIデコレータ
+#### 2.2 DTOのバリデーションと
 
 `pathParameters`, `urlParameters`, `requestBody` のフィールド定義を基に、以下の`NestJS/Class-Validator`のデコレータを適用する。
 
-- OpenAPI: `description`を基に `@ApiProperty({ description: "{論理名}" })` を適用する。
 - 型: `type`を基に下記のClass-Validatorを適用する。
   - `type === "string"` の場合、`@IsString()`を適用する。
-    - `format`に設定がある場合、対応するデコレータ(`@IsDateString()` `@IsEmail()`など)を適用する。最終的に人手確認とするため、[ADVICE]としてログ出力する。
-  - `type === "number"` の場合、`@IsNumber()`を適用する。`format`に`"int"`の指定がある場合(またはDBカラムが整数型と紐づく場合)、`@IsInt()`を併せて適用する。
-  - `type === "boolean"` の場合、`@IsBoolean()`を適用する。
-  - `type === "date"` の場合、`@IsDate()`を適用する。
-  - `type === "array"` の場合、`@IsArray()`を適用する。
+    - `format`に設定がある場合、対応するデコレータを適用する。最終的に人手確認とするため、[ADVICE]としてログ出力する。
+      - `email`の場合、`@IsEmail()`を適用する。
+      - `url`の場合、`@IsEmail()`を適用する。
+      - `UUID`の場合、`@IsUUID()`を適用する。
+      - 日付を示唆する可能性がある場合、`@IsDateString()`を適用する。
+  - `type === "number"` の場合、`@IsNumber(), @Type(() => Number)`を適用する。`format`に`"int"`の指定がある場合(またはDBカラムが整数型と紐づく場合)、`@IsInt()`を併せて適用する。
+  - `type === "boolean"` の場合、`@IsBoolean(), @Type(() => Boolean)`を適用する。
+  - `type === "date"` の場合、`@IsDate(), @Type(() => Date)`を適用する。
+  - `type === "array"` の場合、`@IsArray(), @ValidateNested(), @Type()`を適用する。
   - `type === "object"` の場合、`@IsObject(), @ValidateNested(), @Type()`を適用する。`@Type(() => ChildDto)`とセットで利用する。
 - 必須: `isRequired === true`の場合は`@IsNotEmpty()`を適用し、`isRequired === false`の場合は`@IsOptional()`を適用する。
   - `type === "array"`の場合は`@ArrayNotEmpty()`の適用有無と解釈する。
@@ -269,13 +277,12 @@ ControllerとService/Orchestrator間で一貫したDTOを渡すため、以下�
   - `summary.resource`の記載に基づいて、`@Controller('{resource}')`デコレーターを付与する。
   - `summary.method`及び`summary.endpoint`の記載に基づいて、各メソッドの`@Method('endpoint')`デコレーターを付与する。
   - `summary.authRequired === true`の場合、当該メソッドに`@UseGuards(AuthGuard('jwt'))`デコレーターを付与する。
-  - `response.status`の記載に基づいて、各メソッドに`@HttpCode(HttpStatus.{RESPONSE_STATUS_CODE})`デコレーターを付与する。
-
+  - `response.status`の記載に基づいて、各メソッドに`@HttpCode(HttpStatus.{CODE})`デコレーターを付与する。
 
 ```Typescript
-import { Controller, Get, Post, Put, Patch, Delete, HttpCode, Param, Query, Body, UseGuards, Req, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Request } from 'express'; // User情報の取得を想定
+import { Controller, Get, Post, Put, Patch, Delete, HttpCode, Param, Query, Body, UseGuards, HttpStatus, Req } from '@nestjs/common';
+import { Request } from 'express';
+import { AuthGuard } from '@nestjs/passport';
 import { {Resource}Service } from 'src/service/{resource}/{resource}.service';
 import { {Resource}Orchestrator } from './{resource}.orchestrator';
 
@@ -287,7 +294,6 @@ import { {Resource}{Action}PathParamsDto } from './dto/{resource}-{action}-pathp
 import { {Resource}{Action}UrlParamsDto } from './dto/{resource}-{action}-urlparams.dto';
 import { {Resource}{Action}QueryDto } from './dto/{resource}-{action}-query.dto';
 
-@ApiTags('{Resource} API') // OpenAPIタグ
 @Controller('{resource}') // apis.resource.summary.resource に基づくエンドポイント
 export class {Resource}Controller {
   constructor(
@@ -304,10 +310,8 @@ export class {Resource}Controller {
    */
   @Get('{endpoint_path}') // 例: 'users' の中の '/:id' など
   @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: '{API_NAME_TEXT}', description: '{description}' })
   @HttpCode(HttpStatus.OK)
-  @ApiResponse({ status: HttpStatus.OK, type: {Resource}{Action}ResponseDto })
-  async detail(
+  async {action}(
     @Param() pathParams: {Resource}{Action}PathParamsDto,
     @Query() urlParams: {Resource}{Action}UrlParamsDto,
   ): Promise<{Resource}{Action}ResponseDto> {
@@ -316,48 +320,46 @@ export class {Resource}Controller {
     const query: {Resource}{Action}QueryDto = { ...pathParams, ...urlParams };
 
     // 2. 処理委譲 (GETメソッド、POST/readメソッドはServiceに委譲)
-    return this.{resource}Service.detail(query);
+    return this.{resource}Service.{action}(query);
   }
 
   // Post/listメソッドのテンプレート
   /**
    * {description}
    * @param pathParams Pathパラメータ (apis.resource.pathParametersが存在する場合)
+   * @param urlParams URLクエリパラメータ (apis.resource.urlParametersが存在する場合)
    * @param body Request Body (apis.resource.requestBodyが存在する場合)
    * @param req Express Requestオブジェクト (認証情報を取得する目的で利用)
    * @returns {Resource}{Action}ResponseDto
    */
   @Post('{endpoint_path}') // 例: 'users' の中の '/' や '/:id/reset-password' など
   @UseGuards(AuthGuard('jwt')) // required === trueの場合指定する
-  @ApiOperation({ summary: '{API_NAME_TEXT}', description: '{description}' })
-  @HttpCode(HttpStatus.{RESPONSE_STATUS_CODE}) // 例: CREATED (201)
-  @ApiResponse({ status: HttpStatus.{RESPONSE_STATUS_CODE}, type: {Resource}{Action}ResponseDto })
-  async list(
+  @HttpCode(HttpStatus.OK)
+  async {action}(
     @Param() pathParams: {Resource}{Action}PathParamsDto,
     @Query() urlParams: {Resource}{Action}UrlParamsDto,
     @Body() body: {Resource}{Action}RequestDto,
-    @Req() req: Request,
   ): Promise<{Resource}{Action}ResponseDto> {
 
     // 1. DTOとクエリの結合
-    const query: {Resource}{Action}QueryDto = { ...pathParams , ...urlParams, ...body };
+    const query: {Resource}{Action}QueryDto = { ...body, ...pathParams , ...urlParams };
 
     // 2. 処理委譲 (POST/PUT/PATCH/DELETEメソッドはOrchestratorに委譲)
-    return this.{resource}Service.list(query);
+    return this.{resource}Service.{action}(query);
   }
 
+  // 登録系メソッドのテンプレート
   /**
    * {description}
    * @param pathParams Pathパラメータ (apis.resource.pathParametersが存在する場合)
+   * @param urlParams URLクエリパラメータ (apis.resource.urlParametersが存在する場合)
    * @param body Request Body (apis.resource.requestBodyが存在する場合)
    * @param req Express Requestオブジェクト (認証情報を取得する目的で利用)
-   * @returns 登録したリソースのID(更新系APIの場合は戻り値なし)
+   * @returns 登録したリソースのID
    */
   @Post('{endpoint_path}') // 例: 'users' の中の '/' や '/:id/reset-password' など
   @UseGuards(AuthGuard('jwt')) // required === trueの場合指定する
-  @ApiOperation({ summary: '{API_NAME_TEXT}', description: '{description}' })
-  @HttpCode(HttpStatus.{RESPONSE_STATUS_CODE}) // 例: CREATED(201), NO_CONTENT(204)
-  @ApiResponse({ status: HttpStatus.{RESPONSE_STATUS_CODE}, type: string })
+  @HttpCode(HttpStatus.CREATED)
   async {action}(
     @Param() pathParams: {Resource}{Action}PathParamsDto,
     @Query() urlParams: {Resource}{Action}UrlParamsDto,
@@ -370,7 +372,35 @@ export class {Resource}Controller {
 
     // 2. 処理委譲 (POST/PUT/PATCH/DELETEメソッドはOrchestratorに委譲)
     // 委譲の引数として、統合されたクエリ情報、リクエストボディ、認証情報から取得したユーザーIDなどを渡す。
+    const userId = req.user.id; // 認証を前提としている場合、認証情報からユーザーIDを取得
     return this.{resource}Orchestrator.{action}(query /*, userId */);
+  }
+
+  // 更新系メソッドのテンプレート
+  /**
+   * {description}
+   * @param pathParams Pathパラメータ (apis.resource.pathParametersが存在する場合)
+   * @param urlParams URLクエリパラメータ (apis.resource.urlParametersが存在する場合)
+   * @param body Request Body (apis.resource.requestBodyが存在する場合)
+   * @param req Express Requestオブジェクト (認証情報を取得する目的で利用)
+   */
+  @Post('{endpoint_path}') // 例: 'users' の中の '/' や '/:id/reset-password' など。デコレーターは@Patch、@Put、@Deleteはmethodの設定値により選択する。
+  @UseGuards(AuthGuard('jwt')) // required === trueの場合指定する
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async {action}(
+    @Param() pathParams: {Resource}{Action}PathParamsDto,
+    @Query() urlParams: {Resource}{Action}UrlParamsDto,
+    @Body() body: {Resource}{Action}RequestDto,
+    @Req() req: Request,
+  ): Promise<void> {
+
+    // 1. Path/Queryパラメータの統合 (POST/PUT/PATCH/DELETEではURLパラメータは稀だが、存在する場合は統合する)
+    const query: {Resource}{Action}QueryDto = { ...body, ...pathParams , ...urlParams };
+
+    // 2. 処理委譲 (POST/PUT/PATCH/DELETEメソッドはOrchestratorに委譲)
+    // 委譲の引数として、統合されたクエリ情報、リクエストボディ、認証情報から取得したユーザーIDなどを渡す。
+    const userId = req.user.id; // 認証を前提としている場合、認証情報からユーザーIDを取得
+    this.{resource}Orchestrator.{action}(query /*, userId */);
   }
 }
 ```
@@ -385,6 +415,7 @@ export class {Resource}Controller {
 
 ```Typescript
 // src/domain/{resource}/{resource}.orchestrator.ts
+import { Injectable } from '@nestjs/common';
 import { PrismaTransaction } from 'src/prisma/prisma.service';
 
 /** 
@@ -394,23 +425,26 @@ import { PrismaTransaction } from 'src/prisma/prisma.service';
 export class {Resource}Orchestrator {
   constructor(
     private readonly {resource}Service: {Resource}Service,
-    private readonly prismaTransaction: PrismaTransaction,
+    // PrismaServiceから $transaction のみ公開するインターフェースをDI
+    private readonly prismaTransactionService: PrismaTransaction,
   ) {}
+
+  // 登録系Actionのオーケストレーションメソッド
   /**
    * {name}
-   * @param data {Resource}CreateRequestDto
+   * @param data {Resource}{Action}RequestDto
    * @param userId 認証情報から取得したユーザーID(認証を前提とするAPIの場合)
    * @returns 登録したリソースのID
    */ 
-  async create(query: {Resource}CreateRequestDto /*, userId*/): Promise<string> {  
+  async {action}(query: {Resource}{Action}RequestDto /*, userId*/): Promise<string> {  
     // 1. TODO: 項目間関連チェック(Service層のメソッドを呼び出す)
 
     // 2. TODO: 作成者IDとトランザクション開始作成時刻の取得
     // const userId = {USER_UUID}; // 認証を前提としない場合、生成する。
     // const txDateTime = {CURRENT_TIMESTAMP};
 
-    // 3. TODO: PrismaTransactionをDIし、トランザクションを開始
-    await this.prismaTransaction.$transaction(async (prismaTx: PrismaTransaction) => {
+    // 3. TODO: PrismaTransactionServiceを呼び出し、トランザクションを開始
+    await this.prismaTransactionService.$transaction(async (prismaTx: PrismaTransaction) => {
     
     // 4. TODO: Service層のトランザクション対応メソッドを呼び出し、prismaTx, userId, txDateTimeを渡す
     // const result = this.service.createWithTx(prismaTx, userId, txDateTime);
@@ -421,23 +455,25 @@ export class {Resource}Orchestrator {
     // return result.id;
     });
   }
+
+  // 更新系・その他Actionのオーケストレーションメソッド
   /**
    * {name}
-   * @param data {Resource}UpdateRequestDto
+   * @param data {Resource}{Action}RequestDto
    * @param userId 認証情報から取得したユーザーID(認証を前提とするAPIの場合)
    */ 
-  async update(data: {Resource}UpdateRequestDto /*, userId*/) {
+  async {action}(data: {Resource}{Action}RequestDto /*, userId*/) {
     // 1. TODO: 項目間関連チェック(Service層のメソッドを呼び出す)
   
     // 2. TODO: トランザクション開始作成時刻の取得
     // const userId = {USER_UUID}; // 認証を前提としない場合、生成する。
     // const txDateTime = {CURRENT_TIMESTAMP};
   
-    // 3. TODO: PrismaServiceをDIし、トランザクションを開始
-    await this.prismaTransaction.$transaction(async (prismaTx: PrismaTransaction) => {
+    // 3. TODO: PrismaTransactionServiceを呼び出し、トランザクションを開始
+    await this.prismaTransactionService.$transaction(async (prismaTx: PrismaTransaction) => {
   
     // 4. TODO: Service層のトランザクション対応メソッドを呼び出し、prismaTx, userId, txDateTime, リクエストDTOを渡す
-    // const result = this.service.createWithTx(prismaTx, userId, txDateTime, data: {Resource}CreateRequestDto);
+    // const result = this.service.{action}WithTx(prismaTx, userId, txDateTime, data: {Resource}{Action}RequestDto);
   
     // 5. TODO: 複数のリソースを跨ぐ場合は、他のServiceのprismaTx対応メソッドも呼び出す
 
@@ -471,7 +507,9 @@ export class {Resource}Orchestrator {
 
 ```Typescript
 // src/domain/{resource}/{resource}.service.ts
+import { Injectable } from '@nestjs/common';
 import { {Resource}Dao } from 'src/database/{resource}.dao';
+import { {Resource}Dto } from 'src/database/dto/{resource}.dto';
 
 /** 
  * {Resource}のサービスクラス 
@@ -479,19 +517,19 @@ import { {Resource}Dao } from 'src/database/{resource}.dao';
 @Injectable()
 export class {Resource}Service {
   constructor(
-      private readonly {resource}Dao: {Resource}Dao,
+    private readonly {resource}Dao: {Resource}Dao, //（例：usersDao: UsersDao, ordersDao: OrdersDao等）
   ) {}
   // 取得系メソッドのテンプレート
   /**
    * {name}
    * @param query {Resource}ListQueryDto
-   * @returns 登録した{resource}のDTO
+   * @returns 登録した{resource}のTableNameDto
    */
   async {action}(query: {Resource}ListQueryDto): Promise<{Resource}ListResponseDto> {
-      // 1. TODO: QueryDtoからDB検索条件を生成 (Paging/Filtering)
-      // 2. TODO: DataAccessModule (DAO)を呼び出し、DB検索を実行
-      // 3. TODO: 検索結果をResponseDtoへ詰め替え (TableDto -> ResponseDto)
-      // 4. TODO: ResponseDtoを返却
+    // 1. TODO: QueryDtoからDB検索条件を生成 (Paging/Filtering)
+    // 2. TODO: DataAccessModule (DAO)を呼び出し、DB検索を実行
+    // 3. TODO: 検索結果をResponseDtoへ詰め替え (TableDto -> ResponseDto)
+    // 4. TODO: ResponseDtoを返却
   }
   
   // 登録・更新系メソッドのテンプレート
@@ -504,25 +542,25 @@ export class {Resource}Service {
    * @returns {Resource}{Action}ResponseDto
    */
   async {action}WithTx(
-      prismaTx: PrismaTransaction, 
-      userId: string, 
-      txDateTime: Date, 
-      query: {Resource}{Action}RequestDto
+    prismaTx: PrismaTransaction, 
+    userId: string, 
+    txDateTime: Date, 
+    query: {Resource}{Action}RequestDto
   ): Promise<{Resource}{Action}ResponseDto> {
-      // 1. TODO: RequestDtoからDB登録データ (DAO) へ詰め替え (RequestDto -> TableDto)
-      // 2. TODO: ビジネスロジックの実行 (バリデーション、採番、属性付与など)
-      // 3. TODO: DAOのtx対応メソッドを呼び出し、DB登録を実行 (prismaTxを渡す)
-      // 4. TODO: DB結果を ResponseDto へ詰め替え (TableDto -> ResponseDto)
-      // 5. TODO: ResponseDtoを返却
+    // 1. TODO: RequestDtoからDB登録データ (DAO) へ詰め替え (RequestDto -> TableDto) schema.prismaの型情報、制約を利用する。
+    // 2. TODO: ビジネスロジックの実行 (バリデーション、採番、属性付与など)
+    // 3. TODO: DAOのtx対応メソッドを呼び出し、DB登録を実行 (prismaTxを渡す)
+    // 4. TODO: DB結果を ResponseDto へ詰め替え (TableDto -> ResponseDto)
+    // 5. TODO: ResponseDtoを返却
   }
 }
 ```
 
-### N. テストクラスの作成
+### 5. テストクラスの作成
 
 各クラスと同階層に、クラスファイルと対応するテストコードを作成する。テストコードのファイル名は、テスト対象のファイル名に対して、`{source-code.name}.spec.ts`とする。
 
-#### DTOのテストコード(例: users-create-request.dto.spec.ts)
+#### 5.1 DTOのテストコード(例: users-create-request.dto.spec.ts)
 
 DTOクラスそれぞれのバリデーション確認を行う。テストにはclass-transformerとclass-validatorを使用する。
 
@@ -579,7 +617,7 @@ describe('{Resource}{Action}RequestDtoのテスト', () => {
 });
 ```
 
-#### Controllerクラスのテストコード (例: users.controller.spec.ts)
+#### 5.2 Controllerクラスのテストコード (例: users.controller.spec.ts)
 
 NestJSのTestingModuleとモックを利用した単体テストのスケルトンを定義する。
 
@@ -650,7 +688,7 @@ describe('{Resource}Controllerのテスト', () => {
 });
 ```
 
-#### Orchestrator/Serviceクラスのテストコード (例: users.orchestrator.spec.ts / users.service.spec.ts)
+#### 5.3 Orchestrator/Serviceクラスのテストコード (例: users.orchestrator.spec.ts / users.service.spec.ts)
 
 OrchestratorとServiceのテストは、ビジネスロジックの実行と、下位レイヤー(Service/DAO)の適切な呼び出しを検証する単体テストのスケルトンとする。
 
@@ -702,7 +740,7 @@ describe('{ClassName}のテスト', () => {
 });
 ```
 
-#### Moduleクラスのテストコード  (例: users.module.spec.ts)
+#### 5.4 Moduleクラスのテストコード  (例: users.module.spec.ts)
 
 モジュールクラスが正常にコンパイルことを検証する単体テストとする。
 
