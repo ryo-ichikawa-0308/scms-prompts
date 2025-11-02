@@ -30,7 +30,7 @@
   - `src.prisma`
     - `schema.prisma`を格納する。
     - Prisma接続サービスを`PrismaModule`モジュールとして`database`層のモジュールに機能を提供する。
-    - トランザクション管理のため、`PrismaService`のインスタンスからトランザクション開始メソッド（`$transaction`）のみを公開する`PrismaTransaction`インターフェースを`domain`層に提供する。
+    - トランザクション管理のため、`PrismaService`のインスタンスからトランザクション開始メソッド(`$transaction`)のみを公開する`PrismaTransaction`インターフェースを`domain`層に提供する。
 
 ## JSON入力構造
 
@@ -517,7 +517,7 @@ import { {Resource}Dto } from 'src/database/dto/{resource}.dto';
 @Injectable()
 export class {Resource}Service {
   constructor(
-    private readonly {resource}Dao: {Resource}Dao, //（例：usersDao: UsersDao, ordersDao: OrdersDao等）
+    private readonly {resource}Dao: {Resource}Dao, //(例：usersDao: UsersDao, ordersDao: OrdersDao等)
   ) {}
   // 取得系メソッドのテンプレート
   /**
