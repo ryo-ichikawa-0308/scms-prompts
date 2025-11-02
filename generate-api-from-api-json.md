@@ -19,6 +19,7 @@
     - `service`層のモジュールは、`database`層のモジュールにのみ依存する。
   - `src.database`
     - DBのテーブルと1:1で紐づくDAO及びDTOを格納する。すべてのDAOを纏めて、`DataAccessModule`モジュールとして`service`層のモジュールに機能を提供する。
+    - DAOとテーブルDTOファイルはDBテーブルの物理名(snake_case)に合わせ、`{table_name}.dto/dao.ts`形式で命名されている。
     - 各DAOには、下記の基本メソッド及び、テーブル結合を前提とした取得メソッド・計数メソッドが実装されている。`service`層のモジュールは、これらのメソッドを呼び出すことでDB操作を行う。`{TableName}`はPrismaのモデル物理名を示すプレースホルダである。
       - `select{TableName}(dto: Select{TableName}Dto): Promise<{TableName}[]>{}` // テーブル単体の取得メソッド
       - `count{TableName}(dto: Select{TableName}Dto): Promise<number>{}` // テーブル単体の計数メソッド
@@ -508,8 +509,8 @@ export class {Resource}Orchestrator {
 ```Typescript
 // src/domain/{resource}/{resource}.service.ts
 import { Injectable } from '@nestjs/common';
-import { {Resource}Dao } from 'src/database/{resource}.dao';
-import { {Resource}Dto } from 'src/database/dto/{resource}.dto';
+import { {TableName}Dao } from 'src/database/{table_name}.dao';
+import { {TableName}Dto } from 'src/database/dto/{table_name}.dto';
 
 /** 
  * {Resource}のサービスクラス 
