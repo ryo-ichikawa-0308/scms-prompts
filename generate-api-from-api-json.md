@@ -31,7 +31,7 @@
   - `src.prisma`
     - `schema.prisma`を格納する。
     - Prisma接続サービスを`PrismaModule`モジュールとして`database`層のモジュールに機能を提供する。
-    - トランザクション管理のため、`PrismaService`のインスタンスからトランザクション開始メソッド(`$transaction`)のみを公開する`PrismaTransaction`インターフェースを`domain`層に提供する。
+    - トランザクション管理のため、`PrismaService`のインスタンスからトランザクション開始メソッド(`$transaction`)のみを公開する`PrismaTransaction`型を`domain`層に提供する。
 
 ## JSON入力構造
 
@@ -41,6 +41,7 @@ DBのカラムと紐づく項目は、DBカラムの物理名と同じ物理名�
 
 ```JSON
 {
+  "basePath": "{BASE_PATH}",
   "apiList": [
     {
       "no": "{API_NO}",
@@ -199,15 +200,15 @@ DBのカラムと紐づく項目は、DBカラムの物理名と同じ物理名�
 
 #### 2.1 共通 Paging DTO の適用と継承
 
-- 共通クラスの定義: `src/domain/common/paging.dto.ts` に、共通の `PagingOptionsDto`(クエリオプション)および `PaginatedResponseDto<T>`(レスポンスラッパー)を定義する。
+- 共通クラスの定義: `src/domain/common/paging.dto.ts` に、共通の `PagingOptionsDto`(クエリオプション)および `PaginatedResponseDto<T>`(レスポンスラッパー)が定義されている(実装済みの前提である)。
   - リクエストDTOへの継承
     - リスト取得系API(`summary.action === "list"`)の統合クエリDTO (`{Resource}{Action}QueryDto`) は、`PagingOptionsDto`を自動的に継承 (extends)する。
     - `import { PagingOptionsDto } from 'src/domain/common/paging.dto';`でページングDTOの型をimportする。
   - レスポンスDTOへの適用
-    - リスト系APIのレスポンスDTO (`{Resource}{Action}ResponseDto`) は、`PaginatedResponseDto<T>` を利用し、`<T>` にリストの要素DTO(ネスト要素DTO)を渡す形で定義する。
+    - リスト取得系APIのレスポンスDTO (`{Resource}{Action}ResponseDto`) は、`PaginatedResponseDto<T>` を利用し、`<T>` にリストの要素DTO(ネスト要素DTO)を渡す形で定義する。
     - `import { PaginatedResponseDto } from 'src/domain/common/paging.dto';`でページングDTOの型をimportする。
 
-#### 2.2 DTOのバリデーションと
+#### 2.2 DTOのバリデーション
 
 `pathParameters`, `urlParameters`, `requestBody` のフィールド定義を基に、以下の`NestJS/Class-Validator`のデコレータを適用する。
 
@@ -320,7 +321,7 @@ export class {Resource}Controller {
     // 必須項目がなければ、DTOのプロパティを ? でOptionalにするか、Path/QueryDTOの代わりに{}を利用する
     const query: {Resource}{Action}QueryDto = { ...pathParams, ...urlParams };
 
-    // 2. 処理委譲 (GETメソッド、POST/readメソッドはServiceに委譲)
+    // 2. 処理委譲 (GETメソッドはServiceに委譲)
     return this.{resource}Service.{action}(query);
   }
 
@@ -342,11 +343,11 @@ export class {Resource}Controller {
     @Body() body: {Resource}{Action}RequestDto,
   ): Promise<{Resource}{Action}ResponseDto> {
 
-    // 1. DTOとクエリの結合
-    const query: {Resource}{Action}QueryDto = { ...body, ...pathParams , ...urlParams };
+    // 1. クエリの結合
+    const query: {Resource}{Action}QueryDto = { ...pathParams , ...urlParams };
 
-    // 2. 処理委譲 (POST/PUT/PATCH/DELETEメソッドはOrchestratorに委譲)
-    return this.{resource}Service.{action}(query);
+    // 2. 処理委譲 (POST/readメソッドはServiceに委譲)
+    return this.{resource}Service.{action}(body, query);
   }
 
   // 登録系メソッドのテンプレート
@@ -369,12 +370,12 @@ export class {Resource}Controller {
   ): Promise<string> {
 
     // 1. Path/Queryパラメータの統合 (POST/PUT/PATCH/DELETEではURLパラメータは稀だが、存在する場合は統合する)
-    const query: {Resource}{Action}QueryDto = { ...body, ...pathParams , ...urlParams };
+    const query: {Resource}{Action}QueryDto = { ...pathParams , ...urlParams };
 
     // 2. 処理委譲 (POST/PUT/PATCH/DELETEメソッドはOrchestratorに委譲)
     // 委譲の引数として、統合されたクエリ情報、リクエストボディ、認証情報から取得したユーザーIDなどを渡す。
     const userId = req.user.id; // 認証を前提としている場合、認証情報からユーザーIDを取得
-    return this.{resource}Orchestrator.{action}(query /*, userId */);
+    return this.{resource}Orchestrator.{action}(body, query /*, userId */);
   }
 
   // 更新系メソッドのテンプレート
@@ -396,12 +397,12 @@ export class {Resource}Controller {
   ): Promise<void> {
 
     // 1. Path/Queryパラメータの統合 (POST/PUT/PATCH/DELETEではURLパラメータは稀だが、存在する場合は統合する)
-    const query: {Resource}{Action}QueryDto = { ...body, ...pathParams , ...urlParams };
+    const query: {Resource}{Action}QueryDto = { ...pathParams , ...urlParams };
 
     // 2. 処理委譲 (POST/PUT/PATCH/DELETEメソッドはOrchestratorに委譲)
     // 委譲の引数として、統合されたクエリ情報、リクエストボディ、認証情報から取得したユーザーIDなどを渡す。
     const userId = req.user.id; // 認証を前提としている場合、認証情報からユーザーIDを取得
-    this.{resource}Orchestrator.{action}(query /*, userId */);
+    this.{resource}Orchestrator.{action}(body, query /*, userId */);
   }
 }
 ```
@@ -433,11 +434,16 @@ export class {Resource}Orchestrator {
   // 登録系Actionのオーケストレーションメソッド
   /**
    * {name}
-   * @param data {Resource}{Action}RequestDto
+   * @param body {Resource}{Action}RequestDto
+   * @param query {Resource}{Action}QueryDto
    * @param userId 認証情報から取得したユーザーID(認証を前提とするAPIの場合)
    * @returns 登録したリソースのID
    */ 
-  async {action}(query: {Resource}{Action}RequestDto /*, userId*/): Promise<string> {  
+  async {action}(
+      body: {Resource}{Action}RequestDto, 
+      query: {Resource}{Action}QueryDto 
+      /*, userId: string*/
+    ): Promise<string> {  
     // 1. TODO: 項目間関連チェック(Service層のメソッドを呼び出す)
 
     // 2. TODO: 作成者IDとトランザクション開始作成時刻の取得
@@ -460,10 +466,15 @@ export class {Resource}Orchestrator {
   // 更新系・その他Actionのオーケストレーションメソッド
   /**
    * {name}
-   * @param data {Resource}{Action}RequestDto
+   * @param body {Resource}{Action}RequestDto
+   * @param query {Resource}{Action}QueryDto
    * @param userId 認証情報から取得したユーザーID(認証を前提とするAPIの場合)
    */ 
-  async {action}(data: {Resource}{Action}RequestDto /*, userId*/) {
+  async {action}(
+    body: {Resource}{Action}RequestDto, 
+    query: {Resource}{Action}QueryDto 
+    /*, userId: string*/
+    ) {
     // 1. TODO: 項目間関連チェック(Service層のメソッドを呼び出す)
   
     // 2. TODO: トランザクション開始作成時刻の取得
@@ -491,7 +502,7 @@ export class {Resource}Orchestrator {
 
 - メソッド定義
   - 取得系 (`GET`および `POST/read`)
-    - 定義: 統合クエリDTOを受け取り、DAOを呼び出すメソッドを定義する。
+    - 定義: 統合クエリDTO(及び、`POST/read`の場合はリクエストボディを含む)を受け取り、DAOを呼び出すメソッドを定義する。
     - 命名規則: `{action}のCamelCase`表現(例: `findAll`, `findOne`)。
 
   - 登録・更新・削除系 (`POST`, `PATCH`, `PUT`, `DELETE`)
@@ -518,16 +529,20 @@ import { {TableName}Dto } from 'src/database/dto/{table_name}.dto';
 @Injectable()
 export class {Resource}Service {
   constructor(
-    private readonly {resource}Dao: {Resource}Dao, //(例：usersDao: UsersDao, ordersDao: OrdersDao等)
+    private readonly {tableName}Dao: {TableName}Dao, //(例：usersDao: UsersDao, ordersDao: OrdersDao等)
   ) {}
   // 取得系メソッドのテンプレート
   /**
    * {name}
-   * @param query {Resource}ListQueryDto
+   * @param body {Resource}{Action}QueryRequestDto // POST/listの場合
+   * @param query {Resource}{Action}QueryDto
    * @returns 登録した{resource}のTableNameDto
    */
-  async {action}(query: {Resource}ListQueryDto): Promise<{Resource}ListResponseDto> {
-    // 1. TODO: QueryDtoからDB検索条件を生成 (Paging/Filtering)
+  async {action}(
+      body {Resource}{Action}QueryRequestDto, // POST/listの場合
+      query: {Resource}ListQueryDto
+    ): Promise<{Resource}ListResponseDto> {
+    // 1. TODO: Request/QueryDtoからDB検索条件を生成 (Paging/Filtering)
     // 2. TODO: DataAccessModule (DAO)を呼び出し、DB検索を実行
     // 3. TODO: 検索結果をResponseDtoへ詰め替え (TableDto -> ResponseDto)
     // 4. TODO: ResponseDtoを返却
@@ -539,7 +554,7 @@ export class {Resource}Service {
    * @param prismaTx トランザクション
    * @param userId トランザクション実行者のID(認証情報から取得)
    * @param txDateTime トランザクション開始日時
-   * @param data {Resource}{Action}RequestDto
+   * @param query {Resource}{Action}RequestDto
    * @returns {Resource}{Action}ResponseDto
    */
   async {action}WithTx(

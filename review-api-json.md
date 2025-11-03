@@ -19,6 +19,7 @@
 
 ```JSON
 {
+  "basePath": "{BASE_PATH}",
   "apiList": [
     {
       "no": "{API_NO}",
@@ -134,7 +135,7 @@
   - モデル物理名はPascalCase、カラム物理名はcamelCaseで記載されていること。
   - リレーションフィールド、逆リレーションフィールドは論理名不要である。
 
-- API設計書が、キー名`apiList`の配列と、キー名`apis`の配列を持つJSONオブジェクトであること。
+- API設計書が、バージョニングを示すキー名`basePath`の文字列、キー名`apiList`の配列、キー名`apis`の配列を持つJSONオブジェクトであること。
 
 - `apiList`の要素は、下記の項目を持つJSONオブジェクトであること。
   - `no`
@@ -186,7 +187,7 @@
 
 - `apiList.endpoint`が、基本構造(`/api/v1/{リソース名}/<アクション>`)に従っていること。
 
-  - {リソース名}は対応するPrismaモデル物理名をsnake_case変換したものと一致していること。(例: UserServices → user_services)
+  - {リソース名}は対応するPrismaモデル物理名をkebab-case変換したものと一致していること。(例: UserServices → user-services)
   - {リソース名}がPrismaモデルに存在しない場合、人手チェックするため警告として指摘せよ。(例: auth、emailなど)
 
 - `read`APIのメソッド検証:

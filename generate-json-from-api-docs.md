@@ -29,7 +29,11 @@ API一覧は、マークダウンの表形式で記述されている。記述�
   - [API名](filepath)形式でなかった場合は、記載内容をそのまま文字列として`name`の要素とし、`path`は""(空文字)とせよ。また、[WARN]としてログに記録せよ。
   - [API名](filepath)形式で、かつ、各項目が抽出できなかった場合は、その要素を""(空文字)とし、[WARN]としてログに記録せよ。
 
-- リソース・アクション・メソッドは、空欄もしくは`-`の場合、[ERROR]としてログに記録せよ。
+- エンドポイントは、ベースパス部分(`/api/v1/`)は除去して設定せよ(例: `/api/v1/users/{id}` → `users/{id}`)。
+  - API一覧内に異なるベースパスが存在する場合(`/api/v1/`と`/api/v2/`など)、[ERROR]としてログに記録せよ。
+  - 空欄もしくは`-`の場合、[ERROR]としてログに記録せよ。
+
+- リソース・アクションは、kebab-caseで定義されていることを確認せよ。空欄もしくは`-`の場合、[WARN]としてログに記録せよ。
 
 - メソッドは、設定値に応じて`"GET"` `"POST"` `"PATCH"` `"PUT"` `"DELETE"`のいずれかとせよ。それ以外の値が設定されている場合、[ERROR]としてログに記録せよ。
 
@@ -94,21 +98,21 @@ API概要は、マークダウンの表形式(実質的に箇条書き)で記述
 
 変換後のJSONオブジェクトは、以下のプロパティを持つ再帰的な構造とする。
 
-| 変換前の項目     | 変換後のキー名 | データ型      | 備考(ロジックの解釈)                                                   |
-| ---------------- | -------------- | ------------- | ---------------------------------------------------------------------- |
-| 論理名           | description    | string        |                                                                        |
-| 物理名           | name           | string        |                                                                        |
-| 型               | type           | string        | 例: string, number, integer, boolean, array, date, object              |
-| DBテーブル       | dbTable        | string        |                                                                        |
-| DBカラム         | dbColumn       | string        |                                                                        |
-| 必須             | required       | boolean       |                                                                        |
-| 最小桁数         | minLength      | number        | `type`が`string`の場合にのみ適用される文字数制限                       |
-| 最大桁数         | maxLength      | number        | `type`が`string`の場合にのみ適用される文字数制限                       |
-| フォーマット     | format         | string        |                                                                        |
-| 最小値           | min            | number / date | `type`が数値型の場合は数値の最小値。`type`が`date`の場合は日付の最小値 |
-| 最大値           | max            | number / date | `type`が数値型の場合は数値の最大値。`type`が`date`の場合は日付の最大値 |
-| 備考             | note           | string        |                                                                        |
-| 子要素(再帰構造) | children       | array         |                                                                        |
+| 変換前の項目     | 変換後のキー名 | データ型      | 備考(ロジックの解釈)                                                                        |
+| ---------------- | -------------- | ------------- | ------------------------------------------------------------------------------------------- |
+| 論理名           | description    | string        |                                                                                             |
+| 物理名           | name           | string        |                                                                                             |
+| 型               | type           | string        | 例: string, number, integer, boolean, array, date, object                                   |
+| DBテーブル       | dbTable        | string        |                                                                                             |
+| DBカラム         | dbColumn       | string        |                                                                                             |
+| 必須             | required       | boolean       |                                                                                             |
+| 最小桁数         | minLength      | number        | `type`が`string`の場合にのみ適用される文字数制限                                            |
+| 最大桁数         | maxLength      | number        | `type`が`string`の場合にのみ適用される文字数制限                                            |
+| フォーマット     | format         | string        |                                                                                             |
+| 最小値           | min            | number / date | `type`が数値型の場合は数値の最小値。`date`の場合は日付の最小値。`array`の場合は最小要素数。 |
+| 最大値           | max            | number / date | `type`が数値型の場合は数値の最大値。`date`の場合は日付の最大値。`array`の場合は最小要素数。 |
+| 備考             | note           | string        |                                                                                             |
+| 子要素(再帰構造) | children       | array         |                                                                                             |
 
 - 「子要素」以外の項目に欠落がある場合、当該項目を""(空文字)で補完し、[ERROR]としてログに記載せよ。
 
@@ -237,6 +241,7 @@ API一覧及びAPI個別設計書群の処理結果を統合し、下記のフ�
 
 ```JSON
 {
+  "basePath": "{BASE_PATH}",
   "apiList": [
     {
       "no": "{API_NO}",
