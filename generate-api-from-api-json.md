@@ -226,6 +226,7 @@ DBのカラムと紐づく項目は、DBカラムの物理名と同じ物理名�
   - `type === "object"` の場合、`@IsObject(), @ValidateNested(), @Type()`を適用する。`@Type(() => ChildDto)`とセットで利用する。
 - 必須: `isRequired === true`の場合は`@IsNotEmpty()`を適用し、`isRequired === false`の場合は`@IsOptional()`を適用する。
   - `type === "array"`の場合は`@ArrayNotEmpty()`の適用有無と解釈する。
+  - `pathParameters`の場合は常に`isRequired === true`として処理する。
 - 桁数: `minLength`, `maxLength`の指定がある場合、`@MinLength()`, `@MaxLength()`を適用する。
 - 範囲: `min`, `max`の指定がある場合、`@Min()`, `@Max()`を適用する。
   - `type === "array"`の場合は`@ArrayMinSize()`, `@ArrayMaxSize()`の適用有無と解釈する。
@@ -271,15 +272,28 @@ ControllerとService/Orchestrator間で一貫したDTOを渡すため、以下�
 #### 4.1 `src/domain`層(Controllerクラス)の生成
 
 - 処理委譲
-  - `summary.method === "GET"` の場合は、`{Resource}Service`に直接処理を委譲する。
-  - `summary.action === "read"` かつ `summary.method === "POST"`の場合は、`{Resource}Service`に直接処理を委譲する。
-  - `summary.action !== "read"` かつ `summary.method === "POST/PATCH/PUT/DELETE"`の場合は、`{Resource}Orchestrator`に処理を委譲する。
+  - `summary.method === "GET"` の場合は、トランザクション処理が不要のため、`{Resource}Service`に直接処理を委譲する。
+  - `summary.action === "read"` かつ `summary.method === "POST"`の場合は、トランザクション処理が不要のため、`{Resource}Service`に直接処理を委譲する。
+  - `summary.action !== "read"` かつ `summary.method === "POST/PATCH/PUT/DELETE"`の場合は、トランザクション処理を行うため、`{Resource}Orchestrator`に処理を委譲する。
+
 - DTO統合: `pathParams`, `urlParams` のDTOが存在する場合、メソッド内部で統合DTOに結合する処理を記述する。
-- 下記のテンプレートに基づいて、定義されているメソッドを生成する。
-  - `summary.resource`の記載に基づいて、`@Controller('{resource}')`デコレーターを付与する。
-  - `summary.method`及び`summary.endpoint`の記載に基づいて、各メソッドの`@Method('endpoint')`デコレーターを付与する。
+
+- ルーティングパスの抽出
+- `apis.summary.endpoint` の記載から、ルーティングパスを抽出する。
+  - ベースパス部分(`/api/v1`など)は省略されている前提である。
+  - URLパラメータ部分(`?`以降)は除去する。
+  - 最初のパスセグメント(例: `/users`)を抽出し、前後の`/`を除去して`@Controller('{resource}')`の引数として使用する。(例: `@Controller('users')`)
+  - 残りのパスセグメント(例: `/{id}`)を抽出する。`{}`で囲まれた文字列は変数として`:`付き表記に変換する。(例: `{id}` → `:id`)
+  - 残りのパスが存在しない場合は`/`とする。
+  - これをメソッドデコレーター(例: `@Get('/:id')`)の引数として使用する。
+
+- デコレーターの付与
+  - 抽出したデコレーターの記載に基づいて、`@Controller('{resource}')`デコレーターを付与する。
+  - `summary.method`及び抽出したデコレーターの記載に基づいて、各メソッドの`@Method('endpoint_path')`デコレーターを付与する。
   - `summary.authRequired === true`の場合、当該メソッドに`@UseGuards(AuthGuard('jwt'))`デコレーターを付与する。
   - `response.status`の記載に基づいて、各メソッドに`@HttpCode(HttpStatus.{CODE})`デコレーターを付与する。
+
+- 下記のテンプレートに基づいて、定義されているメソッドを生成する。
 
 ```Typescript
 import { Controller, Get, Post, Put, Patch, Delete, HttpCode, Param, Query, Body, UseGuards, HttpStatus, Req } from '@nestjs/common';
@@ -386,7 +400,7 @@ export class {Resource}Controller {
    * @param body Request Body (apis.resource.requestBodyが存在する場合)
    * @param req Express Requestオブジェクト (認証情報を取得する目的で利用)
    */
-  @Post('{endpoint_path}') // 例: 'users' の中の '/' や '/:id/reset-password' など。デコレーターは@Patch、@Put、@Deleteはmethodの設定値により選択する。
+  @Patch('{endpoint_path}') // 例: 'users' の中の '/' や '/:id/reset-password' など。デコレーター@Patch、@Put、@Deleteはmethodの設定値により選択する。
   @UseGuards(AuthGuard('jwt')) // required === trueの場合指定する
   @HttpCode(HttpStatus.NO_CONTENT)
   async {action}(
