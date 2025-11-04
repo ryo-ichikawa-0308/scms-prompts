@@ -4,12 +4,19 @@
 
 ## プロンプト一覧
 
-* **[generate-dao-dto.md](./generate-dao-dto.md)** PrismaコードからDAO層のコードを自動生成するプロンプト。Pythonなどのスクリプトから生成AIのAPIに送信し、そのレスポンスをスクリプト側で解析して実コードに分離することを想定している。
-
 * **[generate-json-from-db-docs.md](./generate-json-from-db-docs.md)** DB設計書をJSON形式に変換するプロンプト。下記の自動レビュープロンプト(JSON版)のインプットとする想定である。
-* **[review-db-json.md](./review-db-json.md)** DB設計書(JSON版)を自動レビューするためのプロンプト。業務的な要件は人手で確認されていることが前提である。Markdown直接レビューよりも高効率を期待できる。
+* **[review-db-json.md](./review-db-json.md)** DB設計書(JSON版)を自動レビューするためのプロンプト。業務的な要件は人手で確認されていることが前提である。
+* **[generate-prisma-from-db-json.md](./generate-prisma-from-db-json.md)** DB設計書(JSON版)からPrismaコードを自動生成するプロンプト。生成したPrismaコードをAPI設計書のレビュー・API実装に用いる想定である。
+
+---
 
 * **[generate-json-from-api-docs.md](./generate-json-from-api-docs.md)** API設計書をJSON形式に変換するプロンプト。
+* **[review-api-json.md](./review-api-json.md)** API設計書(JSON版)を自動レビューするためのプロンプト。業務的な要件は人手で確認されていることと、PrismaコードがSource of truthとして作成されていることが前提。
+
+---
+
+* **[generate-dao-dto.md](./generate-dao-dto.md)** PrismaコードからDAO層のコードを自動生成するプロンプト。Pythonなどのスクリプトから生成AIのAPIに送信し、そのレスポンスをスクリプト側で解析して実コードに分離することを想定している。
+* **[generate-api-from-api-docs.md](./generate-api-from-api-docs.md)** API設計書(JSON版)からコントローラー層・サービス層のスケルトンコードを自動生成するプロンプト。Pythonなどのスクリプトから生成AIのAPIに送信し、そのレスポンスをスクリプト側で解析して実コードに分離することを想定している。
 
 ## プロンプト一覧(旧作)
 
