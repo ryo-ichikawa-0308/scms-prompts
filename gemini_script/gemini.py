@@ -22,11 +22,9 @@ def load_settings():
 
     # 1. api.iniからAPIキーを読み込む
     try:
-        # INIファイルを読み込む
         read_files = config.read(str(api_ini_path), encoding='utf-8')
         
         if not read_files:
-             # configparser.read() はファイルが見つからなかった場合、空のリストを返す
              raise FileNotFoundError(f"ファイルが見つからないか、読み込めません: {api_ini_path.resolve()}")
 
         if 'GEMINI' in config:
@@ -52,7 +50,6 @@ def load_settings():
     # 2. setting.iniから設定値を読み込む
     try:
         config.read(setting_ini_path, encoding='utf-8')
-        # デフォルトセクションから設定を取得
         default_section = config['SETTING']
         settings['try_times'] = default_section.getint('TRY_TIMES', 1)
         settings['interval'] = default_section.getfloat('INTERVAL', 5.0)
@@ -112,10 +109,9 @@ def read_prompt_and_replace(settings):
                 raise
 
         # プレースホルダを置き換える
-        # プレースホルダはキーに対応する大文字の文字列を想定（例: {PLACEHOLDER}）
         placeholder_tag = '{' + placeholder.upper() + '}'
         
-        # 複数のファイル内容を結合して置き換えテキストとする（改行2つで区切る例）
+        # 複数のファイル内容を結合して置き換えテキストとする
         combined_content = "\n\n".join(replacement_content)
 
         if combined_content:
@@ -132,7 +128,7 @@ def call_gemini_api(prompt_text, settings):
     
     # 3. API処理
     client = genai.Client(api_key=settings['api_key'])
-    model = 'gemini-2.5-flash'  # 使用するモデルは適宜変更可能
+    model = 'gemini-2.5-flash'
 
     response = None
     for attempt in range(settings['try_times']):
@@ -143,7 +139,7 @@ def call_gemini_api(prompt_text, settings):
                 model=model,
                 contents=prompt_text,
             )
-            break  # 成功
+            break
         except APIError as e:
             print(f"APIエラーが発生しました: {e}")
             if attempt < settings['try_times'] - 1:
@@ -178,18 +174,13 @@ def write_outputs(parts, settings):
     
     print(f"結果をディレクトリ {dist_dir.resolve()} に出力します。")
 
-    # ファイル名とファイル内容が交互に並んでいることを期待
-    # parts[0] = 1つ目のファイル名, parts[1] = 1つ目のファイル内容, ...
+    # ファイル名とファイル内容が交互に並んでいる想定
     if len(parts) % 2 != 0:
         print("警告: APIからの応答の要素数が奇数です。最後の要素はファイル名または内容のどちらかとして扱われます。")
 
     for i in range(0, len(parts), 2):
         file_name = parts[i]
-        
-        # ファイル名の正規化と絶対パスの禁止
-        # パス操作の安全性を高めるため、ファイル名からパス区切り文字を除去するなどの処理を検討すべき
         safe_file_name = file_name.replace('/', '_').replace('\\', '_').replace('..', '')
-        
         output_path = dist_dir / safe_file_name
         
         # ファイル内容を取得

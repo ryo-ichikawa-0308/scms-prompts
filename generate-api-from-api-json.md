@@ -281,11 +281,11 @@ ControllerとService/Orchestrator間で一貫したDTOを渡すため、以下�
 - ルーティングパスの抽出
 - `apis.summary.endpoint` の記載から、ルーティングパスを抽出する。
   - ベースパス部分(`/api/v1`など)は省略されている前提である。
-  - URLパラメータ部分(`?`以降)は除去する。
-  - 最初のパスセグメント(例: `/users`)を抽出し、前後の`/`を除去して`@Controller('{resource}')`の引数として使用する。(例: `@Controller('users')`)
-  - 残りのパスセグメント(例: `/{id}`)を抽出する。`{}`で囲まれた文字列は変数として`:`付き表記に変換する。(例: `{id}` → `:id`)
-  - 残りのパスが存在しない場合は`/`とする。
-  - これをメソッドデコレーター(例: `@Get('/:id')`)の引数として使用する。
+  - URLパラメータ部分(`?`以降)を除去し、残ったパスを下記の通り処理する。
+    - 最初のパスセグメント(例: `/users`)を抽出し、前後の`/`を除去して`@Controller('{resource}')`の引数として使用する。(例: `@Controller('users')`)
+    - 残りのパスセグメント(例: `/{id}`)を抽出する。`{}`で囲まれた文字列は変数として`:`付き表記に変換する。(例: `{id}` → `:id`)
+    - 残りのパスが存在しない場合は`/`とする。
+    - これをメソッドデコレーター(例: `@Get('/:id')`)の引数として使用する。
 
 - デコレーターの付与
   - 抽出したデコレーターの記載に基づいて、`@Controller('{resource}')`デコレーターを付与する。
@@ -782,6 +782,30 @@ describe('ModuleNameのテスト', () => {
     });
   });
 });
+```
+
+## 出力方式
+
+作成したコードは、下記のフォーマットで返却せよ。受領側でスクリプト処理を行い、セパレーター(`------`)で分割して、そのまま実装コードとして出力する想定である。このため、セパレーター・ファイル名・実装内容以外の内容を含めてはならない。
+
+```text
+------
+xxxxx.module/controller/orchestrator/service.ts
+------
+// xxxxx.module/controller/orchestrator/service.tsの実装内容
+------
+xxxxx.module/controller/orchestrator/service.spec.ts
+------
+// xxxxx.module/controller/orchestrator/service.spec.tsの実装内容
+------
+xxxxx.dto.ts
+------
+// xxxxx.dto.tsの実装内容
+------
+xxxxx.dto.spec.ts
+------
+// xxxxx.dto.spec.tsの実装内容
+------
 ```
 
 ## API設計書とPrismaコード
