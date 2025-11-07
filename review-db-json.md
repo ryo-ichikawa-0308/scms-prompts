@@ -101,7 +101,7 @@ JSON構造とデータ整合性チェックで「エラー」となる指摘が�
   - その定義が下記の通り厳密に一致すること。
     - `isPrimaryKey`: true
     - `isForeignKey`: false
-    - `typeAndSize`: "VARCHAR(36)"
+    - `typeAndSize`: "CHAR(36)"
     - `unique`: []
     - `isNotNull`: true
     - `defaultValue`: "UUID"
@@ -111,13 +111,13 @@ JSON構造とデータ整合性チェックで「エラー」となる指摘が�
   - is_deletedにunique: ["UKn"] が設定されている場合、その組み合わせがUNIQUEではない他のカラム(特にビジネスキーとなるカラム)と複合して一意性を保証していることを確認せよ。この複合条件を満たしていない場合はエラーとせよ。
   - registered_at, registered_by, updated_at, updated_by, is_deleted の`note`欄は""(空文字)もしくは下記の表の文例であることが望ましい。それ意外の場合は助言として指摘せよ。
 
-| physicalName  | logicalName | typeAndSize | isPrimaryKey | isForeignKey | unique | isNotNull | defaultValue        | note                                        |
-| ------------- | ----------- | ----------- | ------------ | ------------ | ------ | --------- | ------------------- | ------------------------------------------- |
-| registered_at | 登録日時    | TIMESTAMP   | false        | false        | []     | true      | "CURRENT_TIMESTAMP" | ""                                          |
-| registered_by | 登録者      | VARCHAR(36) | false        | false        | []     | true      | ""                  | ""                                          |
-| updated_at    | 更新日時    | TIMESTAMP   | false        | false        | []     | false     | null                | 登録時 NULL、更新時は必須(ロジック側で保証) |
-| updated_by    | 更新者      | VARCHAR(36) | false        | false        | []     | false     | null                | 登録時 NULL、更新時は必須(ロジック側で保証) |
-| is_deleted    | 削除フラグ  | TINYINT(1)  | false        | false        | []     | true      | 0                   | ""                                          |
+| physicalName  | logicalName | typeAndSize  | isPrimaryKey | isForeignKey | unique | isNotNull | defaultValue        | note                                        |
+| ------------- | ----------- | ------------ | ------------ | ------------ | ------ | --------- | ------------------- | ------------------------------------------- |
+| registered_at | 登録日時    | TIMESTAMP(3) | false        | false        | []     | true      | "CURRENT_TIMESTAMP" | ""                                          |
+| registered_by | 登録者      | CHAR(36)     | false        | false        | []     | true      | ""                  | ""                                          |
+| updated_at    | 更新日時    | TIMESTAMP(3) | false        | false        | []     | false     | null                | 登録時 NULL、更新時は必須(ロジック側で保証) |
+| updated_by    | 更新者      | CHAR(36)     | false        | false        | []     | false     | null                | 登録時 NULL、更新時は必須(ロジック側で保証) |
+| is_deleted    | 削除フラグ  | TINYINT(1)   | false        | false        | []     | true      | 0                   | ""                                          |
 
 - **命名規則(カラム):**
 
