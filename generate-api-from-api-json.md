@@ -200,13 +200,61 @@ DBのカラムと紐づく項目は、DBカラムの物理名と同じ物理名�
 
 #### 2.1 共通 Paging DTO の適用と継承
 
-- 共通クラスの定義: `src/domain/common/paging.dto.ts` に、共通の `PagingOptionsDto`(クエリオプション)および `PaginatedResponseDto<T>`(レスポンスラッパー)が定義されている(実装済みの前提である)。
-  - リクエストDTOへの継承
-    - リスト取得系API(`summary.action === "list"`)の統合クエリDTO (`{Resource}{Action}QueryDto`) は、`PagingOptionsDto`を自動的に継承 (extends)する。
-    - `import { PagingOptionsDto } from 'src/domain/common/paging.dto';`でページングDTOの型をimportする。
-  - レスポンスDTOへの適用
-    - リスト取得系APIのレスポンスDTO (`{Resource}{Action}ResponseDto`) は、`PaginatedResponseDto<T>` を利用し、`<T>` にリストの要素DTO(ネスト要素DTO)を渡す形で定義する。
-    - `import { PaginatedResponseDto } from 'src/domain/common/paging.dto';`でページングDTOの型をimportする。
+- 共通クラスの事前定義: `src/domain/dto/common-paging.dto.ts` に、下記の `ListRequestBase`(クエリオプション)および `ListResponseBase<T>`(レスポンスラッパー)が実装済みの前提である。
+
+```Typescript
+export class ListRequestBase {
+  /** 取得位置 */
+  @ValidateIf((o: ListRequestBase) => o.limit !== undefined)
+  @IsInt({ message: '取得位置は数値で入力してください。' })
+  @Min(0, { message: '取得位置は0以上で入力してください。' })
+  offset?: number;
+
+  /** 取得件数 */
+  @ValidateIf((o: ListRequestBase) => o.offset !== undefined)
+  @IsInt({ message: '取得件数は数値で入力してください。' })
+  @Min(1, { message: '取得件数は1以上で入力してください。' })
+  limit?: number;
+}
+
+export class ListResponse<T> {
+  /** 検索条件にあてはまる総件数 */
+  @IsNotEmpty({ message: '総件数は必須です。' })
+  @IsInt({ message: '総件数は数値で入力してください。' })
+  @Min(0, { message: '総件数は1以上で入力してください。' })
+  total: number;
+
+  /** ページ番号(サーバー側で(offset / limit) + 1 として計算) */
+  @IsNotEmpty({ message: 'ページ番号は必須です。' })
+  @IsInt({ message: 'ページ番号は数値で入力してください。' })
+  @Min(1, { message: 'ページ番号は1以上で入力してください。' })
+  currentPage: number;
+
+  /** 取得位置(リクエストと同じ値) */
+  @IsNotEmpty({ message: '取得位置は必須です。' })
+  @IsInt({ message: '取得位置は数値で入力してください。' })
+  @Min(0, { message: '取得位置は0以上で入力してください。' })
+  offset: number;
+
+  /** 取得件数(リクエストと同じ値) */
+  @IsNotEmpty({ message: '取得件数は必須です。' })
+  @IsInt({ message: '取得件数は数値で入力してください。' })
+  @Min(1, { message: '取得件数は1以上で入力してください。' })
+  limit: number;
+
+  /** 取得されたデータリスト。派生クラスで具体的なプロパティ名をつけて再定義する。 */
+  @Exclude()
+  data?: T[];
+}
+```
+
+- リクエストDTOへの継承
+  - リスト取得系API(`summary.action === "list"`)のリクエストボディDTO (`{Resource}{Action}RequestDto`) は、`ListRequestBase`を継承する。
+  - `import { ListRequestBase } from 'src/domain/dto/common-paging.dto.ts';`でページングDTOの型をimportする。
+- レスポンスDTOへの適用
+  - リスト取得系APIのレスポンスDTO (`{Resource}{Action}ResponseDto`) は、`ListResponseBase<T>` を利用し、`<T>` にリストの要素DTO(ネスト要素DTO)を渡す形で定義する。
+  - レスポンスDTOで、`response.body`の配列型プロパティ名を用いてデータリスト配列を再定義する。(例: `contracts: Contract[];`)
+  - `import { ListResponseBase } from 'src/domain/dto/common-paging.dto.ts';`でページングDTOの型をimportする。
 
 #### 2.2 DTOのバリデーション
 
@@ -772,7 +820,7 @@ describe('{ClassName}のテスト', () => {
 
 #### 5.4 Moduleクラスのテストコード  (例: users.module.spec.ts)
 
-モジュールクラスが正常にコンパイルことを検証する単体テストとする。
+モジュールクラスが正常にコンパイルできることを検証する単体テストとする。
 
 ```TypeScript
 describe('ModuleNameのテスト', () => {
