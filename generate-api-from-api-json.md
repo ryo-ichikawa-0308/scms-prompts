@@ -291,7 +291,7 @@ ControllerとService/Orchestrator間で一貫したDTOを渡すため、以下�
   - 抽出したデコレーターの記載に基づいて、`@Controller('{resource}')`デコレーターを付与する。
   - `summary.method`及び抽出したデコレーターの記載に基づいて、各メソッドの`@Method('endpoint_path')`デコレーターを付与する。
   - `summary.authRequired === true`の場合、当該メソッドに`@UseGuards(AuthGuard('jwt'))`デコレーターを付与する。
-  - `response.status`の記載に基づいて、各メソッドに`@HttpCode(HttpStatus.{CODE})`デコレーターを付与する。
+  - `response.status`の記載に基づいて、各メソッドに`@HttpCode(HttpStatus.{CODE})`デコレーターを付与する。番号ではなく、ステータス定数名で付与すること。
 
 - 下記のテンプレートに基づいて、定義されているメソッドを生成する。
 

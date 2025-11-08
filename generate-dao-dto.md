@@ -353,7 +353,7 @@ describe('TableNameDaoのテスト', () => {
     });
     describe('softDeleteTableNameのテスト', () => {
         describe('正常系', () => {
-            test('正常に論理削除ができる場合', () => {
+            describe('正常に論理削除ができる場合', () => {
                 test('対象レコードが論理削除されている場合', () => {
                     // テストコードを実装
                 });
@@ -373,7 +373,7 @@ describe('TableNameDaoのテスト', () => {
     });
     describe('hardDeleteTableNameのテスト', () => {
         describe('正常系', () => {
-            test('正常に物理削除ができる場合', () => {
+            describe('正常に物理削除ができる場合', () => {
                 test('対象レコードが論理削除されている場合', () => {
                     // テストコードを実装
                 });
@@ -395,6 +395,42 @@ describe('TableNameDaoのテスト', () => {
         });
     });
 });
+```
+
+なお、Prismaのモックは下記のテンプレートを用いること。また、モック返却は`jest.spyOn(mockTableNameModel, 'methodName').mockResolvedValueOnce`または`jest.spyOn(mockTableNameModel, 'methodName').mockRejectedValueOnce`を用いて定義すること。
+
+```Typescript
+// Prisma関連のモック
+const mockPrismaService = {
+  $connect: jest.fn().mockResolvedValue(undefined),
+  $disconnect: jest.fn().mockResolvedValue(undefined),
+  $on: jest.fn(),
+  $use: jest.fn(),
+  $transaction: jest.fn(),
+  tableName: {
+    findMany: jest.fn(),
+    count: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+};
+
+const mockTableNameTxModel = mockPrismaService.tableName;
+const mockPrismaTx = {
+  tableName: mockTableNameTxModel,
+} as unknown as PrismaTransaction;
+
+const { PrismaClientKnownRequestError } = jest.requireActual('@prisma/client');
+const mockPrismaError = (code: string) => {
+  return new PrismaClientKnownRequestError(`Mock error for code ${code}`, {
+    code: code,
+    clientVersion: 'test-version',
+    meta: {
+      target: code === 'P2002' ? ['email'] : undefined,
+    },
+  } as any);
+};
 ```
 
 ## Moduleコード設計
