@@ -131,10 +131,10 @@
   - `MEDIUMINT`
     - Prisma Type: `Int`
     - アトリビュート: `@db.MediumInt`のアトリビュートを付加する。
-  - `TINYINT`
-    - Prisma Type: `Int`
+  - `TINYINT` もしくは `TINYINT(N)`
+    - Prisma Type: `TINYINT(1)` の場合は`Boolean`、それ以外の場合は`Int`。
     - アトリビュート: `@db.TinyInt`のアトリビュートを付加する。
-    - 備考: 桁数指定がない`TINYINT`は数値として扱う。
+    - 備考: `TINYINT(1)`の場合は`Boolean`型として扱うことを優先する。1桁以外の場合または桁数未指定の場合のみ、`Int`型として扱う。
   - `BIGINT`
     - Prisma Type: `BigInt`
     - アトリビュート: `@db.BigInt`のアトリビュートを付加する。
@@ -154,9 +154,6 @@
   - `BOOLEAN` `BOOL`
     - Prisma Type: `Boolean`
     - アトリビュート: `@db.Boolean`のアトリビュートを付加する。
-  - `TINYINT(1)`
-  - Prisma Type: `Boolean`
-    - アトリビュート: `@db.TinyInt`のアトリビュートを付加する。
   - `BIT`
     - Prisma Type: `Boolean`
     - アトリビュート: `@db.Bit`のアトリビュートを付加する。
@@ -211,7 +208,7 @@
   - `columns.isNotNull === false`の場合は、`?`を付与する。
 - `columns.defaultValue === ""`以外の場合、当該カラムのDEFAULT値を付与するため、以下のロジックで`@default({値})`アトリビュートを設定する。
   - 当該テーブルが単一の`PK`項目を持つ場合、下記のロジックでサロゲートキーのデフォルト値を設定する。
-    - `columns.typeAndSize === "VARCHAR(36)"`かつ`columns.defaultValue === "UUID"`の場合、`@default(uuid())`アトリビュートを付与する。
+    - `columns.typeAndSize === "CHAR(36)"`かつ`columns.defaultValue === "UUID"`の場合、`@default(uuid())`アトリビュートを付与する。
     - `columns.typeAndSize === "INTEGER"`かつ`columns.defaultValue === "AUTO_INCREMENT"`または`columns.defaultValue === ""`の場合、`@default(autoincrement())`アトリビュートを付与する。
   - `columns.typeAndSize === "DATETIME"`であり、かつ`columns.defaultValue === "CURRENT_TIMESTAMP"`または`columns.defaultValue === "NOW()"`の場合は、`@default(now())`アトリビュートを付与する。
     - 但し、監査項目「更新日時(`update_at`/`updateAt`)」は、`@default({値})`の代わりに`@updatedAt`アトリビュートを付与する。
