@@ -105,6 +105,10 @@ export class ListRequestBase {
   offset?: number;
   /** 取得件数 */
   limit?: number;
+  /** ソートキー */
+  sortBy?: string;
+  /** ソート順 */
+  sortOrder?: string;
 }
 
 export class ListResponse<T> {
