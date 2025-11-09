@@ -405,9 +405,9 @@ const mockPrismaService = {
   },
 };
 
-const mockTableNameTxModel = mockPrismaService.tableName;
+const mockTableNameModel = mockPrismaService.tableName;
 const mockPrismaTx = {
-  tableName: mockTableNameTxModel,
+  tableName: mockTableNameModel,
 } as unknown as PrismaTransaction;
 
 const { PrismaClientKnownRequestError } = jest.requireActual('@prisma/client');
