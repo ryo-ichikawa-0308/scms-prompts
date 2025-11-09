@@ -39,6 +39,8 @@ Prismaコードに基づいて、下記の2つのクラスを定義する。
 - 監査フィールド(登録日時、登録者、更新日時、更新者、削除フラグ)以外の項目をフィールドとして持つ。
 - ページング処理を想定した検索のため、整数型の任意項目`offset`と`limit`を持つ。
   - `offset` と `limit`はコーディング規約上予約語(ページングパラメータ以外に定義禁止)として扱われている前提である。
+- ソートキーとソート条件の任意項目`sortBy`と`sortOrder`を持つ。
+  - `sortBy` と `sortOrder`はコーディング規約上予約語(ソートパラメータ以外に定義禁止)として扱われている前提である。
 - フィールドコメントとして、`[フィールド名]`を付与する。
 - すべての項目を任意項目とする。
 - Prismaのフィールドが数値型の場合はDTOの項目は数値型とする。型や精度(整数型、浮動小数点型、10進数型等)はPrismaフィールドの定義に準ずる。
@@ -143,15 +145,15 @@ describe('TableNameDtoのテスト', () => {
 selectTableName(dto: SelectTableNameDto): Promise<TableName[]>{}
 ```
 
-selectTableNameは、検索結果が0件の場合は空の配列を返す。0件の場合の処理(後続ロジック実行、NotFoundException)は呼び出し元のサービスクラスで行うため、DAOは感知しない。
+- selectTableNameは、検索結果が0件の場合は空の配列を返す。0件の場合の処理(後続ロジック実行、NotFoundException)は呼び出し元のサービスクラスで行うため、DAOは感知しない。
+  - selectTableNameは、検索条件として、「論理削除されていないこと」(`isDeleted: false`)を必須とする。
+  - selectTableNameの要件に当てはまらない検索(他テーブルとの結合、論理削除されているレコードの抽出)は手動で作成するため、本プロンプトの対象外とする。
+  - `offset`/`limit`が設定されている場合は`offset`の値を`skip`に、`limit`の値を`take`に設定する。
+  - `sortBy`/`sortOrder`が設定されている場合は`orderBy`パラメータのキーに`sortBy`を、値に`sortOrder`を設定する。
+    - 但し、`sortBy`のみが設定されていて、`sortOrder`が設定されていない場合は`sortOrder`の値を`asc`で補完する。
 
-selectTableNameは、検索条件として、「論理削除されていないこと」(`isDeleted: false`)を必須とする。
-
-selectTableNameの要件に当てはまらない検索(他テーブルとの結合、論理削除されているレコードの抽出)は手動で作成するため、本プロンプトの対象外とする。
-
-selectTableNameは、下記のPrisma例外を処理する。
-
-- **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
+- selectTableNameは、下記のPrisma例外を処理する。
+  - **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
 
 #### 計数メソッド
 
@@ -164,15 +166,12 @@ selectTableNameは、下記のPrisma例外を処理する。
 countTableName(dto: SelectTableNameDto): Promise<number>{}
 ```
 
-countTableNameは、検索条件に当てはまるデータが存在しない場合は0を返す。0の場合の処理(後続ロジック実行、NotFoundException)は呼び出し元のサービスクラスで行うため、DAOは感知しない。
+- countTableNameは、検索条件に当てはまるデータが存在しない場合は0を返す。0の場合の処理(後続ロジック実行、NotFoundException)は呼び出し元のサービスクラスで行うため、DAOは感知しない。
+  - countTableNameは、検索条件として、「論理削除されていないこと」(`isDeleted: false`)を必須とする。
+  - countTableNameの要件に当てはまらない検索(他テーブルとの結合、論理削除されているレコードの抽出)は手動で作成するため、本プロンプトの対象外とする。
 
-countTableNameは、検索条件として、「論理削除されていないこと」(`isDeleted: false`)を必須とする。
-
-countTableNameの要件に当てはまらない検索(他テーブルとの結合、論理削除されているレコードの抽出)は手動で作成するため、本プロンプトの対象外とする。
-
-countTableNameは、下記のPrisma例外を処理する。
-
-- **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
+- countTableNameは、下記のPrisma例外を処理する。
+  - **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
 
 #### 登録メソッド
 
@@ -185,15 +184,14 @@ countTableNameは、下記のPrisma例外を処理する。
 createTableName(prismaTx: PrismaTransaction, dto: CreateTableNameDto): Promise<TableName>{}
 ```
 
-createTableNameは、データの登録そのものを担当し、登録における業務的な整合性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
+- createTableNameは、データの登録そのものを担当し、登録における業務的な整合性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
 
-createTableNameにおいて、監査フィールドの正当性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
+- createTableNameにおいて、監査フィールドの正当性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
 
-createTableNameは、下記のPrisma例外を処理する。
-
-- **一意制約違反** ConflictExceptionにラップして例外送出する。
-- **外部キー違反** BadRequestExceptionにラップして例外送出する。
-- **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
+- createTableNameは、下記のPrisma例外を処理する。
+  - **一意制約違反** ConflictExceptionにラップして例外送出する。
+  - **外部キー違反** BadRequestExceptionにラップして例外送出する。
+  - **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
 
 #### 更新メソッド
 
@@ -207,16 +205,15 @@ createTableNameは、下記のPrisma例外を処理する。
 updateTableName(prismaTx: PrismaTransaction, updateData: TableName): Promise<TableName>{}
 ```
 
-updateTableNameは、データの更新そのものを担当し、更新における業務的な整合性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
+- updateTableNameは、データの更新そのものを担当し、更新における業務的な整合性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
 
-updateTableNameにおいて、監査フィールドの正当性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
+- updateTableNameにおいて、監査フィールドの正当性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
 
-updateTableNameは、下記のPrisma例外を処理する。
-
-- **一意制約違反** ConflictExceptionにラップして例外送出する。
-- **外部キー違反** BadRequestExceptionにラップして例外送出する。
-- **更新対象のレコードが見つからない** NotFoundExceptionにラップして例外送出する。
-- **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
+- updateTableNameは、下記のPrisma例外を処理する。
+  - **一意制約違反** ConflictExceptionにラップして例外送出する。
+  - **外部キー違反** BadRequestExceptionにラップして例外送出する。
+  - **更新対象のレコードが見つからない** NotFoundExceptionにラップして例外送出する。
+  - **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
 
 #### 論理削除メソッド
 
@@ -230,14 +227,13 @@ updateTableNameは、下記のPrisma例外を処理する。
 softDeleteTableName(prismaTx: PrismaTransaction, id: string): Promise<TableName>{}
 ```
 
-softDeleteTableNameは、データの論理削除そのものを担当し、論理削除における業務的な整合性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
+- softDeleteTableNameは、データの論理削除そのものを担当し、論理削除における業務的な整合性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
 
-softDeleteTableNameにおいて、監査フィールドの正当性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
+- softDeleteTableNameにおいて、監査フィールドの正当性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
 
-softDeleteTableNameは、下記のPrisma例外を処理する。
-
-- **論理削除対象のレコードが見つからない** NotFoundExceptionにラップして例外送出する。
-- **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
+- softDeleteTableNameは、下記のPrisma例外を処理する。
+  - **論理削除対象のレコードが見つからない** NotFoundExceptionにラップして例外送出する。
+  - **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
 
 #### 物理削除メソッド
 
@@ -251,12 +247,11 @@ softDeleteTableNameは、下記のPrisma例外を処理する。
 hardDeleteTableName(prismaTx: PrismaTransaction, id: string): Promise<TableName>{}
 ```
 
-hardDeleteTableNameは、データの物理削除そのものを担当し、物理削除における業務的な整合性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
+- hardDeleteTableNameは、データの物理削除そのものを担当し、物理削除における業務的な整合性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
 
-hardDeleteTableNameは、下記のPrisma例外を処理する。
-
-- **物理削除対象のレコードが見つからない** NotFoundExceptionにラップして例外送出する。
-- **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
+- hardDeleteTableNameは、下記のPrisma例外を処理する。
+  - **物理削除対象のレコードが見つからない** NotFoundExceptionにラップして例外送出する。
+  - **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
 
 ## DAOテストコード設計
 
