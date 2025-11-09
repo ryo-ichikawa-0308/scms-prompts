@@ -484,26 +484,26 @@ describe('DatabaseModuleのテスト', () => {
 
 ### PrismaServiceのパス
 
-- `/src/prisma/prisma.service.ts`
+- `src/prisma/prisma.service.ts`
 
 ### PrismaTransactionのパス
 
-- `/src/prisma/prisma.type.ts`
+- `src/prisma/prisma.type.ts`
 
 ### DAOコード及びDAOテストコードのパス
 
-- `/src/database/dao/table_name.dao.ts`
-- `/src/database/dao/table_name.dao.spec.ts`
+- `src/database/dao/table_name.dao.ts`
+- `src/database/dao/table_name.dao.spec.ts`
 
 ### DTOコード及びDTOテストコードのパス
 
-- `/src/database/dto/table_name.dto.ts`
-- `/src/database/dto/table_name.dto.spec.ts`
+- `src/database/dto/table_name.dto.ts`
+- `src/database/dto/table_name.dto.spec.ts`
 
 ### Moduleコード及びModuleテストコードのパス
 
-- `/src/database/database.module.ts`
-- `/src/database/database.module.spec.ts`
+- `src/database/database.module.ts`
+- `src/database/database.module.spec.ts`
 
 ## 出力方式
 

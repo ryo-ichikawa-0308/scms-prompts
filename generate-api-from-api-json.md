@@ -1,6 +1,6 @@
 # API設計書をPrismaコードに変換する
 
-本プロンプトは、JSON形式で記述されたAPIの設計書読み込み、APIのコントローラークラス、ビジネスロジックのスケルトンクラス、DTOクラスを自動生成する手順書である。手動でのコード生成による設計と実装の乖離を予防し、開発効率を向上させることを目的とする。
+本プロンプトは、JSON形式で記述されたAPIの設計書を読み込み、APIのコントローラークラス、ビジネスロジックのスケルトンクラス、DTOクラスを自動生成する手順書である。手動でのコード生成による設計と実装の乖離を予防し、開発効率を向上させることを目的とする。
 
 ## 前提
 
@@ -18,7 +18,7 @@
     - ビジネスロジックは、機能コンテキストごとにフォルダ分けされ、`ServiceContextModule`(例: `UsersServiceModule`)モジュールとして、`domain`層のモジュールに機能を提供する。
     - `service`層のモジュールは、`database`層のモジュールにのみ依存する。
   - `src.database`
-    - DBのテーブルと1:1で紐づくDAO及びDTOを格納する。すべてのDAOを纏めて、`DataAccessModule`モジュールとして`service`層のモジュールに機能を提供する。
+    - DBのテーブルと1:1で紐づくDAO及びDTOを格納する。すべてのDAOを纏めて、`DatabaseModule`モジュールとして`service`層のモジュールに機能を提供する。
     - DAOとテーブルDTOファイルはDBテーブルの物理名(snake_case)に合わせ、`{table_name}.dto/dao.ts`形式で命名されている。
     - 各DAOには、下記の基本メソッド及び、テーブル結合を前提とした取得メソッド・計数メソッドが実装されている。`service`層のモジュールは、これらのメソッドを呼び出すことでDB操作を行う。`{TableName}`はPrismaのモデル物理名を示すプレースホルダである。
       - `select{TableName}(dto: Select{TableName}Dto): Promise<{TableName}[]>{}` // テーブル単体の取得メソッド
@@ -31,7 +31,8 @@
   - `src.prisma`
     - `schema.prisma`を格納する。
     - Prisma接続サービスを`PrismaModule`モジュールとして`database`層のモジュールに機能を提供する。
-    - トランザクション管理のため、`PrismaService`のインスタンスからトランザクション開始メソッド(`$transaction`)のみを公開する`PrismaTransaction`型を`domain`層に提供する。
+    - `PrismaService`のインスタンスを`PrismaTransaction`型として`domain`層に提供するため、下記の型が提供されている。
+      - `export type PrismaTransaction = Omit<PrismaClient, '...transaction以外を除外...' >;`
 
 ## JSON入力構造
 
@@ -39,122 +40,15 @@
 
 DBのカラムと紐づく項目は、DBカラムの物理名と同じ物理名が与えられている。対応するテーブルは、Prismaコードのモデルコメントと`dbTable`の設定値(テーブル論理名)で紐づける。
 
-```JSON
-{
-  "basePath": "{BASE_PATH}",
-  "apiList": [
-    {
-      "no": "{API_NO}",
-      "name": "{API_NAME_LINK_TEXT}",
-      "path": "{API_FILE_PATH}",
-      "endpoint": "{API_ENDPOINT}",
-      "resource": "{API_RESOURCE}",
-      "action": "{API_ACTION}",
-      "method": "{API_METHOD}",
-      "category": "{API_BUSINESS_DOMAIN}",
-      "authRequired": {AUTH_REQUIRED_BOOLEAN},
-      "note": "{API_LIST_NOTE}"
-    }
-  ],
-  "apis": [
-    "{API_RESOURCE}": [
-      {
-        "no": "{API_NO}",
-        "summary": {
-          "name": "{API_NAME_TEXT}",
-          "endpoint": "{API_ENDPOINT}",
-          "resource": "{API_RESOURCE}",
-          "action": "{API_ACTION}",
-          "method": "{API_METHOD}",
-          "category": "{API_BUSINESS_DOMAIN}",
-          "authRequired": {AUTH_REQUIRED_BOOLEAN},
-          "dataType": "{API_DATA_TYPE}"
-        },
-        "requestHeader": [
-          {
-            "name": "{HEADER_NAME}",
-            "required": {HEADER_REQUIRED_BOOLEAN},
-            "sample": "{HEADER_SAMPLE_VALUE}",
-            "note": "{HEADER_NOTE}"
-          }
-        ],
-        "pathParameters": [
-          {
-            "description": "{論理名}",
-            "name": "{物理名}",
-            "type": "{型}",
-            "dbTable": "{DBテーブル}",
-            "dbColumn": "{DBカラム}",
-            "required": {REQUIRED_BOOLEAN},
-            "minLength": {MIN_LENGTH_NUMBER_OR_NULL},
-            "maxLength": {MAX_LENGTH_NUMBER_OR_NULL},
-            "format": "{フォーマット}",
-            "min": {MIN_VALUE_NUMBER_DATE_OR_NULL},
-            "max": {MAX_VALUE_NUMBER_DATE_OR_NULL},
-            "note": "{備考}"
-          }
-        ],
-        "urlParameters": [
-          {
-            "description": "{論理名}",
-            "name": "{物理名}",
-            "type": "{型}",
-            "dbTable": "{DBテーブル}",
-            "dbColumn": "{DBカラム}",
-            "required": {REQUIRED_BOOLEAN},
-            "minLength": {MIN_LENGTH_NUMBER_OR_NULL},
-            "maxLength": {MAX_LENGTH_NUMBER_OR_NULL},
-            "format": "{フォーマット}",
-            "min": {MIN_VALUE_NUMBER_DATE_OR_NULL},
-            "max": {MAX_VALUE_NUMBER_DATE_OR_NULL},
-            "note": "{備考}"
-          }
-        ],
-        "requestBody": [
-          {
-            "description": "{論理名}",
-            "name": "{物理名}",
-            "type": "{型}",
-            "dbTable": "{DBテーブル}",
-            "dbColumn": "{DBカラム}",
-            "required": {REQUIRED_BOOLEAN},
-            "minLength": {MIN_LENGTH_NUMBER_OR_NULL},
-            "maxLength": {MAX_LENGTH_NUMBER_OR_NULL},
-            "format": "{フォーマット}",
-            "min": {MIN_VALUE_NUMBER_DATE_OR_NULL},
-            "max": {MAX_VALUE_NUMBER_DATE_OR_NULL},
-            "note": "{備考}",
-            "children": []
-          }
-        ],
-        "description": "{処理概要_TEXT}",
-        "response": {
-          "status": {RESPONSE_STATUS_NUMBER},
-          "body": [
-            {
-              "description": "{論理名}",
-              "name": "{物理名}",
-              "type": "{型}",
-              "dbTable": "{DBテーブル}",
-              "dbColumn": "{DBカラム}",
-              "note": "{備考}",
-              "children": []
-            }
-          ]
-        },
-        "errors": [
-          {
-            "status": {ERROR_STATUS_NUMBER},
-            "message": "{ERROR_MESSAGE_REQUIRED}",
-            "detail": "{ERROR_MESSAGE_DETAIL_OR_EMPTY}",
-            "description": "{ERROR_OCCURRENCE_CONDITION_OR_EMPTY}"
-          }
-        ]
-      },      
-    ],
-  ]
-}
-```
+| オブジェクトパス  | 概要                                                    | 主なプロパティ(抜粋)                                                                                                                                |
+| ----------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| apis.{resource}[] | 各APIの定義情報。                                       | `summary`, `pathParameters`, `urlParameters`, `requestBody`, `response`, `errors`                                                                   |
+| summary           | APIの基本情報。クラス名・メソッド名等の基本情報となる。 | `resource`, `action`, `method`, `endpoint`, `authRequired` (Boolean)                                                                                |
+| pathParameters[]  | パスパラメータ。DTOのフィールドとなる。                 | `name` (物理名), `description` (論理名), `type`, `dbTable`, `required` (Boolean), `minLength`/`maxLength`, `min`/`max`, `format`, `children` (配列) |
+| urlParameters[]   | URLパラメータ。DTOのフィールドとなる。                  | `name` (物理名), `description` (論理名), `type`, `dbTable`, `required` (Boolean), `minLength`/`maxLength`, `min`/`max`, `format`, `children` (配列) |
+| requestBody[]     | リクエストボディ。DTOのフィールドとなる。               | `name` (物理名), `description` (論理名), `type`, `dbTable`, `required` (Boolean), `minLength`/`maxLength`, `min`/`max`, `format`, `children` (配列) |
+| response          | レスポンス情報。                                        | `status` (Number), `body` (配列)                                                                                                                    |
+| errors[]          | エラー情報。テストコードの異常系パターンとなる。        | `status` (Number), `message`, `detail`                                                                                                              |
 
 ## 命名規則
 
@@ -172,25 +66,28 @@ DBのカラムと紐づく項目は、DBカラムの物理名と同じ物理名�
 - `apis.resource.requestBody`が空配列`[]`でない場合、下記の通りDTOクラスを作成する。
   - ファイル名を`{resource}-{action}-request.dto.ts`とする。(例: `users-list-request.dto.ts`)
   - クラス名を`{Resource}{Action}RequestDto`とする。(例: `UsersListRequestDto`)
+  - `Controller`のメソッドが`@Body`引数として受け取る前提である。
 
 - `apis.resource.pathParameters`が空配列`[]`でない場合、下記の通りDTOクラスを作成する。
   - ファイル名を`{resource}-{action}-pathparams.dto.ts`とする。(例: `users-list-pathparams.dto.ts`)
   - クラス名を`{Resource}{Action}PathParamsDto`とする。(例: `UsersListPathParamsDto`)
-  - `Controller`クラスが`@Param()`として受け取る前提である。
+  - `Controller`のメソッドが`@Param()`として受け取る前提である。
 
 - `apis.resource.urlParameters`が空配列`[]`でない場合、下記の通りDTOクラスを作成する。
   - ファイル名を`{resource}-{action}-urlparams.dto.ts`とする。(例: `users-list-urlparams.dto.ts`)
   - クラス名を`{Resource}{Action}UrlParamsDto`とする。(例: `UsersListUrlParamsDto`)
-  - `Controller`クラスが`@Query()`として受け取る前提である。
+  - `Controller`のメソッドが`@Query()`として受け取る前提である。
 
 - `apis.resource.response`が空配列`[]`でない場合、下記の通りDTOクラスを作成する。
   - ファイル名を`{resource}-{action}-response.dto.ts`とする。(例: `users-list-response.dto.ts`)
   - クラス名を`{Resource}{Action}ResponseDto`とする。(例: `UsersListResponseDto`)
 
-- `apis.resource.requestBody`あるいは`apis.resource.response`に`children[]`項目が存在する場合、親項目と同じディレクトリに、別ファイルとして切り出す。
+- `apis.resource.requestBody.children[]`あるいは`apis.resource.response.body.children[]`項目に要素が存在する場合、親項目と同じディレクトリに、別ファイルとして切り出す。
   - 親項目における当該項目.`name`の設定値をkebab-caseあるいはPascalCaseとして、ファイル名、クラス名の基本文字列とする。以下、`{child-name}`もしくは`{ChildName}`のプレースホルダとして表現する。
-  - ファイル名を`{resource}-{child-name}.dto.ts`とする。(例: `orders-details.dto.ts`)
-  - クラス名を`{Resource}{ChildName}Dto`とする。(例: `OrdersDetailsDto`)
+  - `requestBody`の子要素の場合、`{parent-name}`は`request`(kebab-case)とする。
+  - `response.body`の子要素の場合、`{parent-name}`は`response`(kebab-case)とする。
+  - ファイル名を`{resource}-{parent-name}-{child-name}.dto.ts`とする。(例: `orders-request-details.dto.ts`)
+  - クラス名を`{Resource}{ParentName}{ChildName}Dto`とする。(例: `OrdersRequestDetailsDto`)
 
 - `apis.resource.pathParameters` `apis.resource.urlParameters`に基づくDTOクラスを作成した場合、この2つを統合して統合クエリDTOを作成する。
   - ファイル名を`{resource}-{action}-query.dto.ts`とする。(例: `users-list-query.dto.ts`)
@@ -205,43 +102,20 @@ DBのカラムと紐づく項目は、DBカラムの物理名と同じ物理名�
 ```Typescript
 export class ListRequestBase {
   /** 取得位置 */
-  @ValidateIf((o: ListRequestBase) => o.limit !== undefined)
-  @IsInt({ message: '取得位置は数値で入力してください。' })
-  @Min(0, { message: '取得位置は0以上で入力してください。' })
   offset?: number;
-
   /** 取得件数 */
-  @ValidateIf((o: ListRequestBase) => o.offset !== undefined)
-  @IsInt({ message: '取得件数は数値で入力してください。' })
-  @Min(1, { message: '取得件数は1以上で入力してください。' })
   limit?: number;
 }
 
 export class ListResponse<T> {
   /** 検索条件にあてはまる総件数 */
-  @IsNotEmpty({ message: '総件数は必須です。' })
-  @IsInt({ message: '総件数は数値で入力してください。' })
-  @Min(0, { message: '総件数は1以上で入力してください。' })
   total: number;
-
   /** ページ番号(サーバー側で(offset / limit) + 1 として計算) */
-  @IsNotEmpty({ message: 'ページ番号は必須です。' })
-  @IsInt({ message: 'ページ番号は数値で入力してください。' })
-  @Min(1, { message: 'ページ番号は1以上で入力してください。' })
   currentPage: number;
-
   /** 取得位置(リクエストと同じ値) */
-  @IsNotEmpty({ message: '取得位置は必須です。' })
-  @IsInt({ message: '取得位置は数値で入力してください。' })
-  @Min(0, { message: '取得位置は0以上で入力してください。' })
   offset: number;
-
   /** 取得件数(リクエストと同じ値) */
-  @IsNotEmpty({ message: '取得件数は必須です。' })
-  @IsInt({ message: '取得件数は数値で入力してください。' })
-  @Min(1, { message: '取得件数は1以上で入力してください。' })
   limit: number;
-
   /** 取得されたデータリスト。派生クラスで具体的なプロパティ名をつけて再定義する。 */
   @Exclude()
   data?: T[];
@@ -249,7 +123,10 @@ export class ListResponse<T> {
 ```
 
 - リクエストDTOへの継承
-  - リスト取得系API(`summary.action === "list"`)のリクエストボディDTO (`{Resource}{Action}RequestDto`) は、`ListRequestBase`を継承する。
+  - リスト取得系API(`summary.action === "list"`)は、メソッドによって下記の通り`ListRequestBase`を継承する。
+    - `method === "POST"`の場合、リクエストボディDTO (`{Resource}{Action}RequestDto`) が`ListRequestBase`を継承する。
+    - `method === "GET"`の場合、統合クエリDTO (`{Resource}{Action}QueryDto`) が`ListRequestBase`を継承する。
+  - ただし、`ListRequestBase`のプロパティと重複するフィールドがJSON入力構造に存在する場合は、そちらを優先する。
   - `import { ListRequestBase } from 'src/domain/dto/common-paging.dto.ts';`でページングDTOの型をimportする。
 - レスポンスDTOへの適用
   - リスト取得系APIのレスポンスDTO (`{Resource}{Action}ResponseDto`) は、`ListResponseBase<T>` を利用し、`<T>` にリストの要素DTO(ネスト要素DTO)を渡す形で定義する。
@@ -269,7 +146,7 @@ export class ListResponse<T> {
       - 日付を示唆する可能性がある場合、`@IsDateString()`を適用する。
   - `type === "number"` の場合、`@IsNumber(), @Type(() => Number)`を適用する。`format`に`"int"`の指定がある場合(またはDBカラムが整数型と紐づく場合)、`@IsInt()`を併せて適用する。
   - `type === "boolean"` の場合、`@IsBoolean(), @Type(() => Boolean)`を適用する。
-  - `type === "date"` の場合、`@IsDate(), @Type(() => Date)`を適用する。
+  - `type === "date"` の場合、`@IsDateString(), @Type(() => Date)`を適用する。
   - `type === "array"` の場合、`@IsArray(), @ValidateNested(), @Type()`を適用する。
   - `type === "object"` の場合、`@IsObject(), @ValidateNested(), @Type()`を適用する。`@Type(() => ChildDto)`とセットで利用する。
 - 必須: `isRequired === true`の場合は`@IsNotEmpty()`を適用し、`isRequired === false`の場合は`@IsOptional()`を適用する。
@@ -303,12 +180,12 @@ ControllerとService/Orchestrator間で一貫したDTOを渡すため、以下�
 - Orchestratorクラス
   - ファイル名を`{resource}.orchestrator.ts`とする。(例: `users.controller.ts`)
   - クラス名を`{Resource}Orchestrator`とする。(例: `UsersOrchestrator`)
-- Serviceクラス
-  - ファイル名を`{resource}.service.ts`とする。(例: `users.service.ts`)
-  - クラス名を`{Resource}Service`とする。(例: `UsersService`)
 - ドメインモジュール
   - ファイル名を`{resource}.domain.module.ts`とする。(例: `users.domain.module.ts`)
   - クラス名を`{Resource}DomainModule.ts`とする。(例: `UsersDomainModule`)
+- Serviceクラス
+  - ファイル名を`{resource}.service.ts`とする。(例: `users.service.ts`)
+  - クラス名を`{Resource}Service`とする。(例: `UsersService`)
 - サービスモジュール
   - ファイル名を`{resource}.service.module.ts`とする。(例: `users.service.module.ts`)
   - クラス名を`{Resource}ServiceModule.ts`とする。(例: `UsersServiceModule`)
@@ -329,7 +206,7 @@ ControllerとService/Orchestrator間で一貫したDTOを渡すため、以下�
 - ルーティングパスの抽出
 - `apis.summary.endpoint` の記載から、ルーティングパスを抽出する。
   - ベースパス部分(`/api/v1`など)は省略されている前提である。
-  - URLパラメータ部分(`?`以降)を除去し、残ったパスを下記の通り処理する。
+  - URLパラメータ部分(`?`以降)を含む場合、これを除去し、残ったパスを下記の通り処理する。
     - 最初のパスセグメント(例: `/users`)を抽出し、前後の`/`を除去して`@Controller('{resource}')`の引数として使用する。(例: `@Controller('users')`)
     - 残りのパスセグメント(例: `/{id}`)を抽出する。`{}`で囲まれた文字列は変数として`:`付き表記に変換する。(例: `{id}` → `:id`)
     - 残りのパスが存在しない場合は`/`とする。
@@ -344,21 +221,9 @@ ControllerとService/Orchestrator間で一貫したDTOを渡すため、以下�
 - 下記のテンプレートに基づいて、定義されているメソッドを生成する。
 
 ```Typescript
-import { Controller, Get, Post, Put, Patch, Delete, HttpCode, Param, Query, Body, UseGuards, HttpStatus, Req } from '@nestjs/common';
-import { Request } from 'express';
-import { AuthGuard } from '@nestjs/passport';
-import { {Resource}Service } from 'src/service/{resource}/{resource}.service';
-import { {Resource}Orchestrator } from './{resource}.orchestrator';
-
-// DTOのインポートは、自動生成時に{resource}に紐づくDTOのみをリスト化して追加する
-
-import { {Resource}{Action}RequestDto } from './dto/{resource}-{action}-request.dto';
-import { {Resource}{Action}ResponseDto } from './dto/{resource}-{action}-response.dto';
-import { {Resource}{Action}PathParamsDto } from './dto/{resource}-{action}-pathparams.dto';
-import { {Resource}{Action}UrlParamsDto } from './dto/{resource}-{action}-urlparams.dto';
-import { {Resource}{Action}QueryDto } from './dto/{resource}-{action}-query.dto';
-
+// src/domain/{resource}/{resource}.controller.ts
 @Controller('{resource}') // apis.resource.summary.resource に基づくエンドポイント
+@UsePipes(new ValidationPipe({ transform: true }))
 export class {Resource}Controller {
   constructor(
     private readonly {resource}Service: {Resource}Service,
@@ -376,8 +241,8 @@ export class {Resource}Controller {
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   async {action}(
-    @Param() pathParams: {Resource}{Action}PathParamsDto,
-    @Query() urlParams: {Resource}{Action}UrlParamsDto,
+    @Param() pathParams: {Resource}{Action}PathParamsDto, // pathParametersが空配列でない場合のみ設定
+    @Query() urlParams: {Resource}{Action}UrlParamsDto, // urlParametersが空配列でない場合のみ設定
   ): Promise<{Resource}{Action}ResponseDto> {
     // 1. Path/Queryパラメータの統合
     // 必須項目がなければ、DTOのプロパティを ? でOptionalにするか、Path/QueryDTOの代わりに{}を利用する
@@ -393,15 +258,15 @@ export class {Resource}Controller {
    * @param pathParams Pathパラメータ (apis.resource.pathParametersが存在する場合)
    * @param urlParams URLクエリパラメータ (apis.resource.urlParametersが存在する場合)
    * @param body Request Body (apis.resource.requestBodyが存在する場合)
-   * @param req Express Requestオブジェクト (認証情報を取得する目的で利用)
+   * @param req Express Requestオブジェクト (authRequired === trueの場合のみ)
    * @returns {Resource}{Action}ResponseDto
    */
   @Post('{endpoint_path}') // 例: 'users' の中の '/' や '/:id/reset-password' など
-  @UseGuards(AuthGuard('jwt')) // required === trueの場合指定する
+  @UseGuards(AuthGuard('jwt')) // authRequired === trueの場合のみ指定する
   @HttpCode(HttpStatus.OK)
   async {action}(
-    @Param() pathParams: {Resource}{Action}PathParamsDto,
-    @Query() urlParams: {Resource}{Action}UrlParamsDto,
+    @Param() pathParams: {Resource}{Action}PathParamsDto, // pathParametersが空配列でない場合のみ設定
+    @Query() urlParams: {Resource}{Action}UrlParamsDto, // urlParametersが空配列でない場合のみ設定
     @Body() body: {Resource}{Action}RequestDto,
   ): Promise<{Resource}{Action}ResponseDto> {
 
@@ -418,17 +283,17 @@ export class {Resource}Controller {
    * @param pathParams Pathパラメータ (apis.resource.pathParametersが存在する場合)
    * @param urlParams URLクエリパラメータ (apis.resource.urlParametersが存在する場合)
    * @param body Request Body (apis.resource.requestBodyが存在する場合)
-   * @param req Express Requestオブジェクト (認証情報を取得する目的で利用)
+   * @param req Express Requestオブジェクト (authRequired === trueの場合のみ)
    * @returns 登録したリソースのID
    */
   @Post('{endpoint_path}') // 例: 'users' の中の '/' や '/:id/reset-password' など
-  @UseGuards(AuthGuard('jwt')) // required === trueの場合指定する
+  @UseGuards(AuthGuard('jwt')) // authRequired === trueの場合のみ指定する
   @HttpCode(HttpStatus.CREATED)
   async {action}(
-    @Param() pathParams: {Resource}{Action}PathParamsDto,
-    @Query() urlParams: {Resource}{Action}UrlParamsDto,
+    @Param() pathParams: {Resource}{Action}PathParamsDto, // pathParametersが空配列でない場合のみ設定
+    @Query() urlParams: {Resource}{Action}UrlParamsDto, // urlParametersが空配列でない場合のみ設定
     @Body() body: {Resource}{Action}RequestDto,
-    @Req() req: Request,
+    @Req() req: Request,　// authRequired === trueの場合のみ指定する
   ): Promise<string> {
 
     // 1. Path/Queryパラメータの統合 (POST/PUT/PATCH/DELETEではURLパラメータは稀だが、存在する場合は統合する)
@@ -436,7 +301,7 @@ export class {Resource}Controller {
 
     // 2. 処理委譲 (POST/PUT/PATCH/DELETEメソッドはOrchestratorに委譲)
     // 委譲の引数として、統合されたクエリ情報、リクエストボディ、認証情報から取得したユーザーIDなどを渡す。
-    const userId = req.user.id; // 認証を前提としている場合、認証情報からユーザーIDを取得
+    // const userId = req.user.id; // authRequired === trueの場合のみ、userIdを取得する。
     return this.{resource}Orchestrator.{action}(body, query /*, userId */);
   }
 
@@ -449,13 +314,13 @@ export class {Resource}Controller {
    * @param req Express Requestオブジェクト (認証情報を取得する目的で利用)
    */
   @Patch('{endpoint_path}') // 例: 'users' の中の '/' や '/:id/reset-password' など。デコレーター@Patch、@Put、@Deleteはmethodの設定値により選択する。
-  @UseGuards(AuthGuard('jwt')) // required === trueの場合指定する
+  @UseGuards(AuthGuard('jwt')) // authRequired === trueの場合指定する
   @HttpCode(HttpStatus.NO_CONTENT)
   async {action}(
-    @Param() pathParams: {Resource}{Action}PathParamsDto,
-    @Query() urlParams: {Resource}{Action}UrlParamsDto,
+    @Param() pathParams: {Resource}{Action}PathParamsDto, // pathParametersが空配列でない場合のみ設定
+    @Query() urlParams: {Resource}{Action}UrlParamsDto, // urlParametersが空配列でない場合のみ設定
     @Body() body: {Resource}{Action}RequestDto,
-    @Req() req: Request,
+    @Req() req: Request,　// authRequired === trueの場合のみ指定する
   ): Promise<void> {
 
     // 1. Path/Queryパラメータの統合 (POST/PUT/PATCH/DELETEではURLパラメータは稀だが、存在する場合は統合する)
@@ -463,7 +328,7 @@ export class {Resource}Controller {
 
     // 2. 処理委譲 (POST/PUT/PATCH/DELETEメソッドはOrchestratorに委譲)
     // 委譲の引数として、統合されたクエリ情報、リクエストボディ、認証情報から取得したユーザーIDなどを渡す。
-    const userId = req.user.id; // 認証を前提としている場合、認証情報からユーザーIDを取得
+    // const userId = req.user.id; // authRequired === trueの場合のみ、userIdを取得する。
     this.{resource}Orchestrator.{action}(body, query /*, userId */);
   }
 }
@@ -479,9 +344,6 @@ export class {Resource}Controller {
 
 ```Typescript
 // src/domain/{resource}/{resource}.orchestrator.ts
-import { Injectable } from '@nestjs/common';
-import { PrismaTransaction } from 'src/prisma/prisma.service';
-
 /** 
  * {Resource}のオーケストレーションクラス 
  */
@@ -490,7 +352,7 @@ export class {Resource}Orchestrator {
   constructor(
     private readonly {resource}Service: {Resource}Service,
     // PrismaServiceから $transaction のみ公開するインターフェースをDI
-    private readonly prismaTransactionService: PrismaTransaction,
+    private readonly prismaTransaction: PrismaTransaction,
   ) {}
 
   // 登録系Actionのオーケストレーションメソッド
@@ -503,25 +365,25 @@ export class {Resource}Orchestrator {
    */ 
   async {action}(
       body: {Resource}{Action}RequestDto, 
-      query: {Resource}{Action}QueryDto 
-      /*, userId: string*/
+      query: {Resource}{Action}QueryDto, 
+      userId: string // authRequired === trueの場合のみ指定する
     ): Promise<string> {  
     // 1. TODO: 項目間関連チェック(Service層のメソッドを呼び出す)
 
     // 2. TODO: 作成者IDとトランザクション開始作成時刻の取得
-    // const userId = {USER_UUID}; // 認証を前提としない場合、生成する。
-    // const txDateTime = {CURRENT_TIMESTAMP};
+    // const userId = {USER_UUID}; // 認証を前提としない場合、トランザクション開始時に生成する。
+    const txDateTime = {CURRENT_TIMESTAMP};
 
     // 3. TODO: PrismaTransactionServiceを呼び出し、トランザクションを開始
-    await this.prismaTransactionService.$transaction(async (prismaTx: PrismaTransaction) => {
+    await this.prismaTransaction.$transaction(async (prismaTx: PrismaTransaction) => {
     
-    // 4. TODO: Service層のトランザクション対応メソッドを呼び出し、prismaTx, userId, txDateTimeを渡す
-    // const result = this.service.createWithTx(prismaTx, userId, txDateTime);
+    // 4. TODO: Service層のトランザクション対応メソッドを呼び出し、prismaTx, userId, txDateTime, 各種dtoを渡す
+    const result = this.service.createWithTx(prismaTx, userId, txDateTime, dto);
 
     // 5. TODO: 複数のリソースを跨ぐ場合は、他のServiceのprismaTx対応メソッドも呼び出す
 
     // 6. TODO: 成功したら自動的にコミット。失敗時はロールバック。
-    // return result.id;
+    return result.id;
     });
   }
 
@@ -533,21 +395,21 @@ export class {Resource}Orchestrator {
    * @param userId 認証情報から取得したユーザーID(認証を前提とするAPIの場合)
    */ 
   async {action}(
-    body: {Resource}{Action}RequestDto, 
-    query: {Resource}{Action}QueryDto 
-    /*, userId: string*/
+    body: {Resource}{Action}RequestDto,
+    query: {Resource}{Action}QueryDto,
+    userId: string // authRequired === trueの場合のみ指定する
     ) {
     // 1. TODO: 項目間関連チェック(Service層のメソッドを呼び出す)
   
     // 2. TODO: トランザクション開始作成時刻の取得
-    // const userId = {USER_UUID}; // 認証を前提としない場合、生成する。
-    // const txDateTime = {CURRENT_TIMESTAMP};
+    // const userId = {USER_UUID}; // 認証を前提としない場合、トランザクション開始時に生成する。
+    const txDateTime = {CURRENT_TIMESTAMP};
   
     // 3. TODO: PrismaTransactionServiceを呼び出し、トランザクションを開始
-    await this.prismaTransactionService.$transaction(async (prismaTx: PrismaTransaction) => {
+    await this.prismaTransaction.$transaction(async (prismaTx: PrismaTransaction) => {
   
-    // 4. TODO: Service層のトランザクション対応メソッドを呼び出し、prismaTx, userId, txDateTime, リクエストDTOを渡す
-    // const result = this.service.{action}WithTx(prismaTx, userId, txDateTime, data: {Resource}{Action}RequestDto);
+    // 4. TODO: Service層のトランザクション対応メソッドを呼び出し、prismaTx, userId, txDateTime, 各種DTOを渡す
+    const result = this.service.{action}WithTx(prismaTx, userId, txDateTime, dto);
   
     // 5. TODO: 複数のリソースを跨ぐ場合は、他のServiceのprismaTx対応メソッドも呼び出す
 
@@ -557,10 +419,25 @@ export class {Resource}Orchestrator {
 }
 ```
 
-#### 4.3 `src/service`層(Serviceクラス)の生成
+#### 4.3 `src/domain`層(Moduleクラス)の生成
+
+```TypeScript
+// src/service/{resource}/{resource}.domain.module.ts
+@Module({
+  imports: [{Resource}ServiceModule], 
+  providers: [
+    {Resource}Controller,
+    {Resource}Orchestrator,
+    // 当該リソースに紐づいて作成したコントローラークラス・オーケストレーションクラスを記載する
+  ],
+})
+export class {Resource}DomainModule {}
+```
+
+#### 4.4 `src/service`層(Serviceクラス)の生成
 
 - Serviceクラスの生成
-  - DI: コンストラクタで、DataAccessModuleから提供されるDAO(例: UsersDao)をDIする。
+  - DI: コンストラクタで、DatabaseModuleから提供されるDAO(例: UsersDao)をDIする。
 
 - メソッド定義
   - 取得系 (`GET`および `POST/read`)
@@ -580,11 +457,7 @@ export class {Resource}Orchestrator {
     - DB検索を前提とするバリデーションは、取得系メソッドとして人手で実装するため、スケルトンは作成しない。
 
 ```Typescript
-// src/domain/{resource}/{resource}.service.ts
-import { Injectable } from '@nestjs/common';
-import { {TableName}Dao } from 'src/database/{table_name}.dao';
-import { {TableName}Dto } from 'src/database/dto/{table_name}.dto';
-
+// src/service/{resource}/{resource}.service.ts
 /** 
  * {Resource}のサービスクラス 
  */
@@ -605,7 +478,7 @@ export class {Resource}Service {
       query: {Resource}ListQueryDto
     ): Promise<{Resource}ListResponseDto> {
     // 1. TODO: Request/QueryDtoからDB検索条件を生成 (Paging/Filtering)
-    // 2. TODO: DataAccessModule (DAO)を呼び出し、DB検索を実行
+    // 2. TODO: DatabaseModule (DAO)を呼び出し、DB検索を実行
     // 3. TODO: 検索結果をResponseDtoへ詰め替え (TableDto -> ResponseDto)
     // 4. TODO: ResponseDtoを返却
   }
@@ -634,6 +507,24 @@ export class {Resource}Service {
 }
 ```
 
+#### 4.5 `src/service`層(Moduleクラス)の生成
+
+```TypeScript
+// src/service/{resource}/{resource}.service.module.ts
+@Module({
+  imports: [DatabaseModule], 
+  providers: [
+    {Resource}Service,
+    // 当該リソースに紐づいて作成したサービスクラスを記載する
+  ],
+  exports: [
+    {Resource}Service,
+    // 当該リソースに紐づいて作成したサービスクラスを記載する
+  ],
+})
+export class {Resource}ServiceModule {}
+```
+
 ### 5. テストクラスの作成
 
 各クラスと同階層に、クラスファイルと対応するテストコードを作成する。テストコードのファイル名は、テスト対象のファイル名に対して、`{source-code.name}.spec.ts`とする。
@@ -643,10 +534,6 @@ export class {Resource}Service {
 DTOクラスそれぞれのバリデーション確認を行う。テストにはclass-transformerとclass-validatorを使用する。
 
 ```TypeScript
-import { validate } from 'class-validator';
-import { plainToInstance } from 'class-transformer';
-import { {Resource}{Action}RequestDto } from './{resource}-{action}-request.dto';
-
 describe('{Resource}{Action}RequestDtoのテスト', () => {
   // 正常なテストデータを定義 (プロンプト内の型情報に基づき生成)
   const validData = {
@@ -700,11 +587,6 @@ describe('{Resource}{Action}RequestDtoのテスト', () => {
 NestJSのTestingModuleとモックを利用した単体テストのスケルトンを定義する。
 
 ```TypeScript
-import { Test, TestingModule } from '@nestjs/testing';
-import { {Resource}Controller } from './{resource}.controller';
-import { {Resource}Service } from 'src/service/{resource}/{resource}.service';
-import { {Resource}Orchestrator } from './{resource}.orchestrator';
-
 describe('{Resource}Controllerのテスト', () => {
   let controller: {Resource}Controller;
   // Service/Orchestratorはモック化する
@@ -772,9 +654,7 @@ OrchestratorとServiceのテストは、ビジネスロジックの実行と、�
 
 ```TypeScript
 // Orchestrator/Serviceのテストスケルトン (共通)
-import { Test, TestingModule } from '@nestjs/testing';
 // TODO: テスト対象のクラスと依存関係をインポート
-
 describe('{ClassName}のテスト', () => {
   let target: {ClassName};
   // TODO: 依存関係のモック
@@ -813,12 +693,11 @@ describe('{ClassName}のテスト', () => {
     });
     // TODO: apis.resource.errorsのエラー定義に基づいて、エラーが発生した場合の動作を検証する。
   });
-  
   // TODO: 取得系メソッドのテストも同様に追加
 });
 ```
 
-#### 5.4 Moduleクラスのテストコード  (例: users.module.spec.ts)
+#### 5.4 Moduleクラスのテストコード  (例: users.service.module.spec.ts)
 
 モジュールクラスが正常にコンパイルできることを検証する単体テストとする。
 
@@ -831,6 +710,53 @@ describe('ModuleNameのテスト', () => {
   });
 });
 ```
+
+## ファイルパス
+
+各ファイルは、以下のパスに配置される前提とせよ。また、`import`文は絶対パスで記述せよ。
+
+### PrismaServiceのパス
+
+- `src/prisma/prisma.type.ts`
+
+### database層のDAO/DTO/Moduleコードのパス
+
+- `src/database/dao/table_name.dao.ts`
+- `src/database/dto/table_name.dto.ts`
+- `src/database/database.module.ts`
+
+### domain層のController/Orchestrator/Dto/Moduleコード・テストコードのパス
+
+- `src/domain/{resource}/{resource}.controller.ts`
+- `src/domain/{resource}/{resource}.controller.spec.ts`
+- `src/domain/{resource}/{resource}.orchestrator.ts`
+- `src/domain/{resource}/{resource}.orchestrator.spec.ts`
+
+- `src/domain/{resource}/{resource}-{child-name}.dto.ts`
+- `src/domain/{resource}/{resource}-{child-name}.dto.spec.ts`
+
+- `
+- `src/domain/{resource}/{resource}-{action}-request.dto.ts`
+- `src/domain/{resource}/{resource}-{action}-request.dto.spec.ts`
+
+- `src/domain/{resource}/{resource}-{action}-urlparams.dto.ts`
+- `src/domain/{resource}/{resource}-{action}-urlparams.dto.spec.ts`
+
+- `src/domain/{resource}/{resource}-{action}-pathparams.dto.ts`
+- `src/domain/{resource}/{resource}-{action}-pathparams.dto.spec.ts`
+
+- `src/domain/{resource}/{resource}-{parent-name}-{child-name}.dto.ts`
+- `src/domain/{resource}/{resource}-{parent-name}-{child-name}.dto.spec.ts`
+
+- `src/domain/{resource}/{resource}.domain.module.ts`
+- `src/domain/{resource}/{resource}.domain.module.spec.ts`
+
+### service層のService/Moduleコード・テストコードのパス
+
+- `src/service/{resource}/{resource}.service.ts`
+- `src/service/{resource}/{resource}.service.spec.ts`
+- `src/service/{resource}/{resource}.service.module.ts`
+- `src/service/{resource}/{resource}.service.module.spec.ts`
 
 ## 出力方式
 
