@@ -111,9 +111,11 @@ export class ListRequestBase {
   sortOrder?: string;
 }
 
-export class ListResponse<T> {
+export class ListResponseBase<T> {
   /** 検索条件にあてはまる総件数 */
-  total: number;
+  totalCount: number;
+  /** 総ページ数(サーバー側でMath.ceil(totalCount / limit) として計算) */
+  totalPages: number;
   /** ページ番号(サーバー側で(offset / limit) + 1 として計算) */
   currentPage: number;
   /** 取得位置(リクエストと同じ値) */
@@ -736,21 +738,21 @@ describe('ModuleNameのテスト', () => {
 - `src/domain/{resource}/{resource}.orchestrator.ts`
 - `src/domain/{resource}/{resource}.orchestrator.spec.ts`
 
-- `src/domain/{resource}/{resource}-{child-name}.dto.ts`
-- `src/domain/{resource}/{resource}-{child-name}.dto.spec.ts`
+- `src/domain/{resource}/dto/{resource}-{child-name}.dto.ts`
+- `src/domain/{resource}/dto/{resource}-{child-name}.dto.spec.ts`
 
 - `
-- `src/domain/{resource}/{resource}-{action}-request.dto.ts`
-- `src/domain/{resource}/{resource}-{action}-request.dto.spec.ts`
+- `src/domain/{resource}/dto/{resource}-{action}-request.dto.ts`
+- `src/domain/{resource}/dto/{resource}-{action}-request.dto.spec.ts`
 
-- `src/domain/{resource}/{resource}-{action}-urlparams.dto.ts`
-- `src/domain/{resource}/{resource}-{action}-urlparams.dto.spec.ts`
+- `src/domain/{resource}/dto/{resource}-{action}-urlparams.dto.ts`
+- `src/domain/{resource}/dto/{resource}-{action}-urlparams.dto.spec.ts`
 
-- `src/domain/{resource}/{resource}-{action}-pathparams.dto.ts`
-- `src/domain/{resource}/{resource}-{action}-pathparams.dto.spec.ts`
+- `src/domain/{resource}/dto/{resource}-{action}-pathparams.dto.ts`
+- `src/domain/{resource}/dto/{resource}-{action}-pathparams.dto.spec.ts`
 
-- `src/domain/{resource}/{resource}-{parent-name}-{child-name}.dto.ts`
-- `src/domain/{resource}/{resource}-{parent-name}-{child-name}.dto.spec.ts`
+- `src/domain/{resource}/dto/{resource}-{parent-name}-{child-name}.dto.ts`
+- `src/domain/{resource}/dto/{resource}-{parent-name}-{child-name}.dto.spec.ts`
 
 - `src/domain/{resource}/{resource}.domain.module.ts`
 - `src/domain/{resource}/{resource}.domain.module.spec.ts`
