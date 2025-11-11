@@ -111,9 +111,11 @@ export class ListRequestBase {
   sortOrder?: string;
 }
 
-export class ListResponse<T> {
+export class ListResponseBase<T> {
   /** 検索条件にあてはまる総件数 */
-  total: number;
+  totalCount: number;
+  /** 総ページ数(サーバー側でMath.ceil(totalCount / limit) として計算) */
+  totalPages: number;
   /** ページ番号(サーバー側で(offset / limit) + 1 として計算) */
   currentPage: number;
   /** 取得位置(リクエストと同じ値) */
@@ -502,11 +504,11 @@ export class {Resource}Service {
     txDateTime: Date, 
     query: {Resource}{Action}RequestDto
   ): Promise<{Resource}{Action}ResponseDto> {
+    // ビジネスロジックによるバリデーションは実施済みの前提。
     // 1. TODO: RequestDtoからDB登録データ (DAO) へ詰め替え (RequestDto -> TableDto) schema.prismaの型情報、制約を利用する。
-    // 2. TODO: ビジネスロジックの実行 (バリデーション、採番、属性付与など)
-    // 3. TODO: DAOのtx対応メソッドを呼び出し、DB登録を実行 (prismaTxを渡す)
-    // 4. TODO: DB結果を ResponseDto へ詰め替え (TableDto -> ResponseDto)
-    // 5. TODO: ResponseDtoを返却
+    // 2. TODO: DAOのtx対応メソッドを呼び出し、DB登録を実行 (prismaTxを渡す)
+    // 3. TODO: DB結果を ResponseDto へ詰め替え (TableDto -> ResponseDto)
+    // 4. TODO: ResponseDtoを返却
   }
 }
 ```
@@ -736,21 +738,21 @@ describe('ModuleNameのテスト', () => {
 - `src/domain/{resource}/{resource}.orchestrator.ts`
 - `src/domain/{resource}/{resource}.orchestrator.spec.ts`
 
-- `src/domain/{resource}/{resource}-{child-name}.dto.ts`
-- `src/domain/{resource}/{resource}-{child-name}.dto.spec.ts`
+- `src/domain/{resource}/dto/{resource}-{child-name}.dto.ts`
+- `src/domain/{resource}/dto/{resource}-{child-name}.dto.spec.ts`
 
 - `
-- `src/domain/{resource}/{resource}-{action}-request.dto.ts`
-- `src/domain/{resource}/{resource}-{action}-request.dto.spec.ts`
+- `src/domain/{resource}/dto/{resource}-{action}-request.dto.ts`
+- `src/domain/{resource}/dto/{resource}-{action}-request.dto.spec.ts`
 
-- `src/domain/{resource}/{resource}-{action}-urlparams.dto.ts`
-- `src/domain/{resource}/{resource}-{action}-urlparams.dto.spec.ts`
+- `src/domain/{resource}/dto/{resource}-{action}-urlparams.dto.ts`
+- `src/domain/{resource}/dto/{resource}-{action}-urlparams.dto.spec.ts`
 
-- `src/domain/{resource}/{resource}-{action}-pathparams.dto.ts`
-- `src/domain/{resource}/{resource}-{action}-pathparams.dto.spec.ts`
+- `src/domain/{resource}/dto/{resource}-{action}-pathparams.dto.ts`
+- `src/domain/{resource}/dto/{resource}-{action}-pathparams.dto.spec.ts`
 
-- `src/domain/{resource}/{resource}-{parent-name}-{child-name}.dto.ts`
-- `src/domain/{resource}/{resource}-{parent-name}-{child-name}.dto.spec.ts`
+- `src/domain/{resource}/dto/{resource}-{parent-name}-{child-name}.dto.ts`
+- `src/domain/{resource}/dto/{resource}-{parent-name}-{child-name}.dto.spec.ts`
 
 - `src/domain/{resource}/{resource}.domain.module.ts`
 - `src/domain/{resource}/{resource}.domain.module.spec.ts`
