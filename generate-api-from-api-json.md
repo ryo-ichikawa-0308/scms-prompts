@@ -504,11 +504,11 @@ export class {Resource}Service {
     txDateTime: Date, 
     query: {Resource}{Action}RequestDto
   ): Promise<{Resource}{Action}ResponseDto> {
+    // ビジネスロジックによるバリデーションは実施済みの前提。
     // 1. TODO: RequestDtoからDB登録データ (DAO) へ詰め替え (RequestDto -> TableDto) schema.prismaの型情報、制約を利用する。
-    // 2. TODO: ビジネスロジックの実行 (バリデーション、採番、属性付与など)
-    // 3. TODO: DAOのtx対応メソッドを呼び出し、DB登録を実行 (prismaTxを渡す)
-    // 4. TODO: DB結果を ResponseDto へ詰め替え (TableDto -> ResponseDto)
-    // 5. TODO: ResponseDtoを返却
+    // 2. TODO: DAOのtx対応メソッドを呼び出し、DB登録を実行 (prismaTxを渡す)
+    // 3. TODO: DB結果を ResponseDto へ詰め替え (TableDto -> ResponseDto)
+    // 4. TODO: ResponseDtoを返却
   }
 }
 ```
