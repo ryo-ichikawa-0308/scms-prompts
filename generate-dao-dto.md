@@ -151,6 +151,8 @@ selectTableNameById(id: string): Promise<TableName | null>{}
 - selectTableNameは、下記のPrisma例外を処理する。
   - **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
 
+#### リスト選択メソッド
+
 ```TypeScript
 /**
  * TableNameを取得する
@@ -235,11 +237,11 @@ updateTableName(prismaTx: PrismaTransaction, updateData: TableName): Promise<Tab
  * @param updatedBy トランザクションを行うユーザーのID
  * @returns 論理削除したレコード
  */
-softDeleteTableName(prismaTx: PrismaTransaction, id: string, updateAt: Date, updateBy: string): Promise<TableName>{}
+softDeleteTableName(prismaTx: PrismaTransaction, id: string, updatedAt: Date, updatedBy: string): Promise<TableName>{}
 ```
 
 - softDeleteTableNameは、データの論理削除そのものを担当し、論理削除における業務的な整合性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
-- softDeleteTableNameは、引数で受け取った主キーと監査項目(updatedAt/updatedBy)を用いて、直接対象テーブルの削除フラグを`true`に設定する。また、監査項目の正当性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
+- softDeleteTableNameは、引数で受け取った主キーと監査フィールド(updatedAt/updatedBy)を用いて、直接対象テーブルの削除フラグを`true`に設定する。また、監査フィールドの正当性は呼び出し元のサービスクラスが保証するため、DAOは感知しない。
 - softDeleteTableNameは、下記のPrisma例外を処理する。
   - **論理削除対象のレコードが見つからない** NotFoundExceptionにラップして例外送出する。
   - **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
