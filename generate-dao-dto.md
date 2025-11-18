@@ -264,6 +264,21 @@ hardDeleteTableName(prismaTx: PrismaTransaction, id: string): Promise<TableName>
   - **物理削除対象のレコードが見つからない** NotFoundExceptionにラップして例外送出する。
   - **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
 
+```TypeScript
+/**
+ * TableNameのロックを取得する
+ * @param id TableNameのID
+ * @returns 取得したテーブル
+ */
+lockTableNameById(id: string): Promise<TableName | null>{}
+```
+
+- lockTableNameByIdは、検索結果が0件の場合はnullを返却する。0件の場合の処理(登録処理に切り替え、NotFoundException)は呼び出し元のサービスクラスで行うため、DAOは感知しない。
+  - lockTableNameは、`$queryRaw`でIDに一致するTableNameのレコードをロックする。削除フラグは考慮しない。
+  - ロック取得のSQLはDBMSに依存するため、`$queryRaw`のSQLはスケルトンとして記載し、`$queryRaw`の戻り値配列の0インデックス目を返却する部分のみ作成する。
+- lockTableNameは、下記のPrisma例外を処理する。
+  - **接続エラーなど、予期せぬ例外** InternalServerErrorExceptionにラップして例外送出する。
+
 ## DAOテストコード設計
 
 ### DAOテストコードファイル名
@@ -412,6 +427,21 @@ describe('TableNameDaoのテスト', () => {
             test('外部キー違反が発生した場合', () => {
                 // テストコードを実装
             });
+            test('DB接続エラーが発生した場合', () => {
+                // テストコードを実装
+            });
+        });
+    });
+    describe('lockTableNameByIdのテスト', () => {
+        describe('正常系', () => {
+            test('1件の結果が返る場合', () => {
+                // テストコードを実装
+            });
+            test('ロック対象のレコードが取得できない場合', () => {
+                // テストコードを実装
+            });
+        });
+        describe('異常系', () => {
             test('DB接続エラーが発生した場合', () => {
                 // テストコードを実装
             });
