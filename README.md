@@ -15,7 +15,7 @@
 | -------------------------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------- |
 | [generate-json-from-db-docs.md](./generate-json-from-db-docs.md)     | DB設計書をJSON形式に変換                   | 後続の自動レビュープロンプトの入力データを作成する。                                  |
 | [review-db-json.md](./review-db-json.md)                             | DB設計書(JSON版)の自動レビュー             | 業務的な要件が人手で確認済みであることを前提に、記述形式や一貫性をチェックする。                    |
-| [generate-prisma-from-db-json.md](./generate-prisma-from-db-json.md) | DB設計書(JSON版)からPrismaコードを自動生成 | Prismaコードを自動生成し、API設計書のレビューやAPI実装の**正となる情報源(Source of Truth)**とする。 |
+| [generate-prisma-from-db-json.md](./generate-prisma-from-db-json.md) | DB設計書(JSON版)からPrismaコードを自動生成 | Prismaコードを自動生成し、API設計書のレビューやAPI実装の **正となる情報源(Source of Truth)** とする。 |
 
 ### 2. API設計書処理フェーズ
 
